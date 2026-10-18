@@ -1,0 +1,93 @@
+guide.tumbleweed.title=What Tumbleweed is
+guide.tumbleweed.summary=Your system, and why it changes a little every few days.
+guide.tumbleweed.body=Your computer runs openSUSE Tumbleweed, a Linux system made by the openSUSE project.\nTumbleweed never has big upgrades to a new version. Instead it gets small updates all the time, so your apps are always close to their newest release.\nEach batch of updates is called a snapshot, and it is named by its date, such as 20261012.\nThis computer was set up with TumbleGecko, which adds the apps, settings and safety rails most people want, and Gecko Center is where you look after it from now on.\nThe desktop itself, with the panel, the app menu and the windows, is called KDE Plasma.
+guide.tumbleweed.page=overview
+guide.tumbleweed.action=See your system
+
+guide.updates.title=Updating the right way
+guide.updates.summary=One button updates everything, and why other ways can break things.
+guide.updates.body=Tumbleweed moves forward as a whole, so all its packages must update together.\nThe Update all button on the Updates page does exactly that, the same as the command zypper dup that openSUSE asks for.\nGuides on the internet sometimes say zypper update or point to the Discover app. Both can leave half the system on the old snapshot, so this computer turns them off.\nUpdate about once a week. The longer you wait, the bigger the next update gets.\nAfter an update with a new Linux kernel, restart when it suits you. Until then the old one keeps running.\nFlatpak apps can also be updated one at a time, because each of them carries its own parts.
+guide.updates.page=updates
+guide.updates.action=Open Updates
+
+guide.software.title=Installing apps
+guide.software.summary=Where apps come from, and the safe places to get them.
+guide.software.body=Explore lists the apps from two trusted places, openSUSE itself and Flathub.\nApps from openSUSE are built by openSUSE and update together with the system.\nApps from Flathub come in a box of their own called a Flatpak. They install just for you and need no password.\nWhen an app is offered by both, its page lets you pick. Either one is fine.\nOn Linux you rarely download programs from websites. Search Explore first.\nIf you do download a .rpm package file, opening it shows its page here, with a warning if your computer does not know who signed it.\nOn this computer, double-clicking a Windows program, a DOS game or an AppImage starts it with the right tool, so you do not need to know which one.
+guide.software.page=explore
+guide.software.action=Open Explore
+
+guide.snapshots.title=Snapshots and rolling back
+guide.snapshots.summary=How to undo an update that went wrong.
+guide.snapshots.body=Before and after every software change the system saves a snapshot of itself, a copy of how everything looked.\nIt only covers the system, not your own files, so rolling back never loses your documents or pictures.\nIf the computer misbehaves after an update, open Snapshots and roll back to the snapshot from before it, then restart.\nIf the computer does not even start, pick an older snapshot in the boot menu that shows when it turns on. Once it works, come here and make that the one it keeps.\nOld snapshots are removed on their own, so they do not fill the disk.
+guide.snapshots.page=snapshots
+guide.snapshots.action=Open Snapshots
+
+guide.sources.title=Software sources
+guide.sources.summary=The places your software is downloaded from.
+guide.sources.body=A software source, often called a repository, is a server with a collection of packages.\nThe openSUSE sources hold almost everything. They are tested together, so they never fight each other.\nOther sources, such as NVIDIA's for its driver, are built by others. Each one you add is one more thing that can clash during an update.\nIf an update shows a problem it cannot solve, a source from outside openSUSE is the usual cause. Turning it off for a moment often helps.\nOnly add a source when a guide you trust tells you to, and only from its maker.
+guide.sources.page=sources
+guide.sources.action=Open Sources
+
+guide.drivers.title=Drivers and firmware
+guide.drivers.summary=What makes the hardware work, and when to install anything.
+guide.drivers.body=A driver is the part of the system that talks to a piece of hardware.\nLinux already includes the drivers for almost everything, including AMD and Intel graphics.\nNVIDIA graphics cards are the exception. They work without NVIDIA's own driver, but slowly. Drivers offers to install it.\nFirmware is the small program that lives inside a device itself, such as the motherboard or an SSD. Some makers publish firmware updates for Linux, and Drivers lists them when there are any.
+guide.drivers.page=drivers
+guide.drivers.action=Open Drivers
+
+guide.storage.title=Files and disk space
+guide.storage.summary=Where your things are, and how to make room.
+guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old logs.\nFilelight draws what takes up the space in your own folders.
+guide.storage.page=storage
+guide.storage.action=Open Storage
+
+guide.performance.title=Performance
+guide.performance.summary=What keeps the computer busy right now.
+guide.performance.body=Performance shows how hard the processor, the memory, the disk, the network and the graphics card work, updated every second.\nEach small bar is one processor core. A game or a video export can fill them all, which is normal while it runs.\nThe line under the title says when apps have to wait for something, which is what makes a computer feel slow.\nThe list shows every app and background service. Click a heading to sort by it.\nA number turns yellow when an app takes most of what the computer has, and red when it takes nearly all of it.\nHover an app to end it. Force end closes it at once, use it only when End does not help.\nMemory moved to the disk is normal, but if it keeps growing, the computer needs more memory for what you run.
+guide.performance.page=performance
+guide.performance.action=Open Performance
+
+guide.services.title=Services
+guide.services.summary=The programs that run in the background.
+guide.services.body=A service is a program that runs in the background without a window, such as the one for the network or for printing.\nServices lists every one that runs now, yours and the system's, and those that stopped with an error come first.\nHover a service to read the last lines it wrote, restart it or stop it. Starting a failed one again often helps.\nIf a service keeps failing, its lines are what to show when you ask for help.\nSome services keep the desktop, the network or sound running, so stop one only when you know what it does.
+guide.services.page=services
+guide.services.action=Open Services
+
+guide.password.title=Your password
+guide.password.summary=Why some things ask for it and others do not.
+guide.password.body=Changes to the whole system, such as updates or installing a package, need your password. It proves it is you and not a program acting on its own.\nGecko Center asks for it once in its own window and forgets it when you close it.\nThings that only affect you, such as Flatpak apps or picture previews, need no password.\nNever type your password into a window you did not expect, or into a website.
+guide.password.page=
+guide.password.action=
+
+guide.terminal.title=The terminal
+guide.terminal.summary=You do not need it, but here is what the commands in guides mean.
+guide.terminal.body=The terminal is a window where you type commands. Everything Gecko Center does can also be done there, but you never have to.\nIf a guide asks you to run something, read it first. sudo means the command runs with full control of the system, so only use it with guides you trust.\nzypper is openSUSE's package tool. zypper dup updates the system, zypper install adds a package.\nflatpak installs and removes Flatpak apps.\nIf a guide says zypper update, use the Updates page instead.
+guide.terminal.page=
+guide.terminal.action=
+
+guide.settings.title=Where to change what
+guide.settings.summary=Screens, sound, printers, users and the look of the desktop.
+guide.settings.body=Gecko Center looks after the system underneath. The desktop has its own System Settings app for everything you see and touch.\nThere you set up screens, sound, printers, Wi-Fi, Bluetooth, keyboards, users, the time and the look of the desktop.\nOpen it from the app menu, or right-click the desktop for its wallpaper and icons.
+guide.settings.page=
+guide.settings.action=
+
+guide.help.title=Getting help
+guide.help.summary=Where friendly people answer questions.
+guide.help.body=The openSUSE forums at forums.opensuse.org are the best place to ask. Say that you use Tumbleweed and what you did just before the problem.\nThe openSUSE wiki at en.opensuse.org explains most things in depth.\nNews shows what is new in openSUSE, and when a big change reaches Tumbleweed it is told about there first.\nWhen you ask, the System facts on the Overview page are what helpers want to know.
+guide.help.page=news
+guide.help.action=Open News
+
+word.Tumbleweed=openSUSE's Linux system that updates all the time instead of having big versions.
+word.Snapshot=A batch of Tumbleweed updates named by its date. Also a saved copy of the system you can roll back to.
+word.zypper dup=The command that updates Tumbleweed as a whole, the Update all button runs it.
+word.Package=One piece of software as the system installs it, an app is often several packages.
+word.Software source=A server with a collection of packages, also called a repository.
+word.Flatpak=An app that comes with its own parts, so it runs the same on every Linux system.
+word.Flathub=The main store of Flatpak apps.
+word.Kernel=The core of Linux that talks to the hardware, a new one starts after a restart.
+word.Driver=The part of the system that talks to one piece of hardware.
+word.Firmware=The small program inside a device itself.
+word.Service=A program that runs in the background without a window.
+word.sudo=Run a command with full control of the system. It needs your password.
+word.Btrfs=The way the system disk is organised. It makes snapshots possible.
+word.KDE Plasma=The desktop, with the panel, the app menu and the windows.
+word.TumbleGecko=The setup that turned this Tumbleweed into a finished desktop, and installed Gecko Center.

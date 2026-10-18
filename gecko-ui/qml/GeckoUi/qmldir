@@ -1,0 +1,8 @@
+module GeckoUi
+singleton Theme 1.0 Theme.qml
+GeckoButton 1.0 GeckoButton.qml
+Toggle 1.0 Toggle.qml
+GeckoScrollBar 1.0 GeckoScrollBar.qml
+FastWheel 1.0 FastWheel.qml
+PasswordDialog 1.0 PasswordDialog.qml
+MouseBack 1.0 MouseBack.qml

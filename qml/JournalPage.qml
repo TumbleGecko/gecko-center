@@ -54,7 +54,7 @@ GeckoPage {
 
 	actions: [
 		GeckoButton {
-			text: "Look again"
+			text: "Read the journal again"
 			enabled: !page.busy
 			onClicked: page.readBoot(page.boot, !!page.report && page.report.everyone)
 		}

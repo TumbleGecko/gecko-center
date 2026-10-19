@@ -53,6 +53,23 @@ TEMPERATURE = "Temperature"
 HOT = {"Processor": 90, "Graphics": 85, "Memory": 80, "Storage": 70}
 DEFAULT_HOT = 90
 
+# What each kind of part is and what it does, in words that need no knowledge of computers
+GROUP_ABOUT = {
+	"Computer": ("This computer", "Its motherboard holds every part, and its firmware starts the computer."),
+	"Processor": ("The processor", "It runs every program."),
+	"Memory": ("A memory module", "It holds what programs are working on right now."),
+	"Graphics": ("The graphics card", "It draws everything on the screen."),
+	"Displays": ("A screen", ""),
+	"Storage": ("A disk", "It keeps the system and your files."),
+	"Sound": ("A sound device", "It plays or records sound, such as speakers, a headset or a microphone."),
+	"Network": ("A network connection", "It connects the computer to the internet and other computers."),
+	"Input": ("An input device", "It is how you control the computer, such as a keyboard, mouse or game controller."),
+	"Cameras": ("A camera", ""), "Batteries": ("A battery", ""), "Other USB devices": ("A USB device", ""),
+	"Controllers": ("A part of the motherboard", "It connects other parts, such as USB ports and disks."),
+	"Firmware": ("Firmware", "The small program inside a part that makes it work."),
+}
+ALL_MEMORY_ABOUT = ("All the memory together", "It holds what programs are working on right now.")
+
 GROUP_ORDER = ("Computer", "Processor", "Memory", "Graphics", "Displays", "Storage", "Sound", "Network", "Input",
 	"Cameras", "Batteries", "Other USB devices", "Controllers", "Firmware")
 
@@ -406,11 +423,26 @@ def _firmware(devices):
 	return entries
 
 
+def _about(device):
+	"""What the part is, who made it and how it is connected, then what it does."""
+	facts = dict(device["facts"])
+	what, does = ALL_MEMORY_ABOUT if device["key"] == "memory" else GROUP_ABOUT.get(device["group"], ("A part", ""))
+	if facts.get("Maker") and device["group"] not in ("Computer", "Firmware"):
+		what += f" made by {facts['Maker'].rstrip('.')}"
+	if device["key"].startswith("usb:"):
+		what += ", plugged in over USB"
+	elif facts.get("Connection") and device["group"] == "Storage":
+		what += f", connected over {facts['Connection']}"
+	return f"{what}. {does}".strip()
+
+
 def collect():
 	sensors = sensors_module.read_sensors()
 	firmware = drivers.fwupd_devices()
 	cards = drivers.graphics_cards()
 	found = (_computer(firmware) + _processor(sensors, firmware) + _memory(sensors) + _pci_parts(sensors, cards)
 		+ _displays() + _disks(sensors) + _usb_parts() + _batteries() + _firmware(firmware))
+	for device in found:
+		device["about"] = _about(device)
 	# One list in group order, the page puts a heading above each group
 	return {"devices": sorted(found, key=lambda device: GROUP_ORDER.index(device["group"]))}

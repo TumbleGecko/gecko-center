@@ -36,7 +36,7 @@ GeckoPage {
 
 	actions: [
 		GeckoButton {
-			text: page.asked ? "Look again" : "Show snapshots"
+			text: page.asked ? "Read the snapshots again" : "Show snapshots"
 			primary: !page.asked
 			onClicked: page.read()
 		},

@@ -159,7 +159,7 @@ GeckoPage {
 	actions: [
 		GeckoButton {
 			visible: page.view !== "running"
-			text: page.lastCheck.checked ? "Look again" : "Look for updates"
+			text: page.lastCheck.checked ? "Look for updates again" : "Look for updates"
 			primary: !page.lastCheck.checked
 			enabled: !bridge.checking && !bridge.busy
 			onClicked: page.look()

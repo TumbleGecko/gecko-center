@@ -69,7 +69,7 @@ GeckoPage {
 
 	actions: [
 		GeckoButton {
-			text: "Look again"
+			text: "Check the system again"
 			onClicked: center.read("health")
 		},
 		Item { Layout.fillWidth: true }

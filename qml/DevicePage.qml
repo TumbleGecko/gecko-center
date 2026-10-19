@@ -13,25 +13,26 @@ GeckoPage {
 
 	title: device ? device.name : ""
 	scroller: scroll
-	subtitle: !device ? "" : device.group === device.kind ? device.group
-		: device.group + "  ·  " + device.kind
+	// A sentence saying what the part is, so the page needs nothing from the list it was opened from
+	subtitle: device ? Theme.lines(device.about) : ""
 	busy: center.reading.includes("hardware")
 	empty: !device
 
 	// Coming back through history can open this before the hardware page has read anything
-	Component.onCompleted: if (!center.info.hardware) center.read("hardware")
+	Component.onCompleted: {
+		if (!center.info.hardware)
+			center.read("hardware")
+		center.watchHardware(true)
+	}
+	// The part's facts follow it being plugged in or out while the page shows
+	Component.onDestruction: center.watchHardware(false)
 
 	actions: [
 		GeckoButton {
 			text: "‹  Back"
 			onClicked: window.goBack()
 		},
-		Item { Layout.fillWidth: true },
-		GeckoButton {
-			text: "Look again"
-			enabled: !page.busy
-			onClicked: center.read("hardware")
-		}
+		Item { Layout.fillWidth: true }
 	]
 
 	Flickable {

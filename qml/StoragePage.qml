@@ -110,14 +110,14 @@ GeckoPage {
 
 				Text {
 					Layout.fillWidth: true
-					text: swap.info ? swap.info.about.split("\n")[0] : ""
+					text: swap.info ? Theme.lines(swap.info.about.split("\n")[0]) : ""
 					color: Theme.muted
 					wrapMode: Text.WordWrap
 				}
 
 				Text {
 					Layout.fillWidth: true
-					text: swap.info ? swap.info.advice : ""
+					text: swap.info ? Theme.lines(swap.info.advice) : ""
 					color: swap.info && swap.info.adviceGood ? Theme.accentHover : Theme.warning
 					wrapMode: Text.WordWrap
 				}

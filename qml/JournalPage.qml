@@ -7,7 +7,7 @@ import QtQuick.Layouts
 GeckoPage {
 	id: page
 
-	readonly property var report: center.info.logs || null
+	readonly property var report: center.info.journal || null
 	readonly property var problems: report ? report.problems : []
 	readonly property var crashes: problems.filter(problem => problem.kind === "crash")
 	readonly property var others: problems.filter(problem => problem.kind !== "crash")
@@ -29,28 +29,28 @@ GeckoPage {
 
 	function readBoot(boot, everyone) {
 		if (!everyone) {
-			center.readLogs(boot, false)
+			center.readJournal(boot, false)
 			return
 		}
-		window.withPassword(center.logsNeedPassword(), "Reading the system's messages needs your password.",
-			"Show them", () => center.readLogs(boot, true))
+		window.withPassword(center.journalNeedsPassword(), "Reading the system's messages needs your password.",
+			"Show system messages", () => center.readJournal(boot, true))
 	}
 
 	function open(problem) {
 		window.openDetail({ key: "problem:" + problem.key, problem: problem.key })
 	}
 
-	title: "Logs"
-	guideTopic: "logs"
+	title: "Journal"
+	guideTopic: "journal"
 	scroller: scroll
 	subtitle: !report ? "" : problems.length === 0 ? "Nothing went wrong."
 		: [crashes.length > 0 ? crashes.length + (crashes.length === 1 ? " program crashed" : " programs crashed") : "",
 			others.length > 0 ? others.length + (others.length === 1 ? " other problem" : " other problems") : ""]
 			.filter(part => part).join(", ") + "."
-	busy: center.reading.includes("logs")
+	busy: center.reading.includes("journal")
 	empty: !report
 
-	Component.onCompleted: if (!report) center.read("logs")
+	Component.onCompleted: if (!report) center.read("journal")
 
 	actions: [
 		GeckoButton {
@@ -88,7 +88,7 @@ GeckoPage {
 				status: "note"
 				heading: "Only your own messages are shown."
 				details: "The system and Linux itself write their messages where only an administrator can read them."
-				actionText: "Show them too"
+				actionText: "Show system messages"
 				onActed: page.readBoot(page.boot, true)
 			}
 

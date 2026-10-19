@@ -73,7 +73,7 @@ Rectangle {
 						{ page: "drivers", name: "Drivers", glyph: "▣" },
 						{ page: "storage", name: "Storage", glyph: "⛃" },
 						{ page: "services", name: "Services", glyph: "⚑" },
-						{ page: "logs", name: "Logs", glyph: "☰" },
+						{ page: "journal", name: "Journal", glyph: "☰" },
 						{ heading: "Help" },
 						{ page: "guide", name: "Guide", glyph: "?" },
 						{ page: "settings", name: "Settings", glyph: "⚙" }

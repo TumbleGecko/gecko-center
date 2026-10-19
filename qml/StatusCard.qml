@@ -20,13 +20,6 @@ Rectangle {
 	default property alias extra: trailing.data
 	readonly property bool attention: status === "problem" || status === "warning"
 
-	// Each state has its own mark as well as its own colour
-	readonly property var look: ({
-		"good": { mark: "✓", color: Theme.accent },
-		"note": { mark: "i", color: Theme.muted },
-		"warning": { mark: "!", color: Theme.warning },
-		"problem": { mark: "✕", color: Theme.danger }
-	})[status] || null
 
 	signal acted()
 
@@ -43,23 +36,9 @@ Rectangle {
 		anchors.margins: 20
 		spacing: 18
 
-		Rectangle {
-			visible: card.look !== null
+		StateMark {
 			Layout.alignment: Qt.AlignTop
-			implicitWidth: 36
-			implicitHeight: 36
-			radius: 18
-			color: "transparent"
-			border.color: card.look ? card.look.color : "transparent"
-			border.width: 2
-
-			Text {
-				anchors.centerIn: parent
-				text: card.look ? card.look.mark : ""
-				color: card.look ? card.look.color : Theme.text
-				font.pixelSize: 18
-				font.weight: Font.Bold
-			}
+			status: card.status
 		}
 
 		ColumnLayout {
@@ -76,7 +55,8 @@ Rectangle {
 
 			Text {
 				Layout.fillWidth: true
-				text: card.heading
+				// Each sentence starts a line of its own, so a second one never wraps under the first
+				text: Theme.lines(card.heading)
 				color: Theme.textStrong
 				font.pixelSize: 19
 				font.weight: Font.DemiBold
@@ -87,7 +67,7 @@ Rectangle {
 				Layout.fillWidth: true
 				Layout.topMargin: 4
 				visible: card.details !== ""
-				text: card.details
+				text: Theme.lines(card.details)
 				color: Theme.muted
 				wrapMode: Text.WordWrap
 				lineHeight: 1.25

@@ -15,6 +15,7 @@ from PySide6.QtQml import QQmlApplicationEngine
 from . import background, packages, paths, technical, update_notes, updates
 
 sys.path.insert(0, str(paths.GECKO_UI / "python"))
+from gecko_ui.mouse_navigation import MouseNavigation  # noqa: E402
 from gecko_ui.root_access import RootAccess  # noqa: E402
 from .catalog import FLATHUB, AppModel
 from .center import Center
@@ -519,6 +520,7 @@ def main(page, targets):
 	context.setContextProperty("startPage", page or "")
 	context.setContextProperty("windowSizeFile", QUrl.fromLocalFile(str(paths.WINDOW_SIZE_FILE)))
 	context.setContextProperty("monospace", QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont).family())
+	MouseNavigation(application, interface).attach(interface)
 	interface.load(QUrl.fromLocalFile(str(paths.QML / "Main.qml")))
 	if not interface.rootObjects():
 		return EXIT_FAILURE

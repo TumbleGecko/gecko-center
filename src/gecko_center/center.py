@@ -9,7 +9,7 @@ import threading
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
-from . import (drivers, guide, hardware, health, logs, news, operations, performance, report, services, snapshots,
+from . import (drivers, guide, hardware, health, journal, news, operations, performance, report, services, snapshots,
 	sources, storage)
 from .commands import Command, run_as_root
 
@@ -25,7 +25,7 @@ COLLECTORS = {
 	"report": report.share,
 	"drivers": drivers.collect,
 	"hardware": hardware.collect,
-	"logs": logs.collect,
+	"journal": journal.collect,
 	"storage": storage.collect,
 	"services": services.collect,
 }
@@ -101,27 +101,27 @@ class Center(QObject):
 			self._store(kind, guide.read_guide())
 
 	@Slot(int, bool)
-	def readLogs(self, boot, everyone):
+	def readJournal(self, boot, everyone):
 		"""One start's problems, everyone's through sudo when asked, else only yours without a password."""
-		if "logs" in self._reading:
+		if "journal" in self._reading:
 			return
-		self._reading.add("logs")
+		self._reading.add("journal")
 		self.readingChanged.emit()
 		if not everyone:
-			threading.Thread(target=lambda: self._collected.emit("logs", logs.collect(boot)), daemon=True).start()
+			threading.Thread(target=lambda: self._collected.emit("journal", journal.collect(boot)), daemon=True).start()
 			return
-		shown = self._info.get("logs") or {"boot": boot, "everyone": False, "boots": [], "problems": []}
+		shown = self._info.get("journal") or {"boot": boot, "everyone": False, "boots": [], "problems": []}
 
 		def take(code, text):
 			# A cancelled password keeps what the page showed rather than an empty list
 			if code != EXIT_SUCCESS:
-				self._store("logs", shown)
+				self._store("journal", shown)
 				return
-			self._store("logs", dict(shown, boot=boot, everyone=True, problems=logs.problems_from_json(text)))
-		run_as_root(self._root, logs.problems_arguments(boot), self).finished.connect(take)
+			self._store("journal", dict(shown, boot=boot, everyone=True, problems=journal.problems_from_json(text)))
+		run_as_root(self._root, journal.problems_arguments(boot), self).finished.connect(take)
 
 	@Slot(result=bool)
-	def logsNeedPassword(self):
+	def journalNeedsPassword(self):
 		return self._root.needsPassword()
 
 	@Slot(bool)

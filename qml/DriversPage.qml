@@ -95,11 +95,11 @@ GeckoPage {
 
 							Text {
 								Layout.fillWidth: true
-								text: card.modelData.wantsNvidia
+								text: Theme.lines(card.modelData.wantsNvidia
 									? "It runs on the basic driver, which is slow for games. NVIDIA's own driver makes it "
 										+ "much faster, for GeForce 16, RTX 20 and newer."
 									: (card.modelData.about || "Driver " + card.modelData.driver)
-										+ (card.modelData.version ? " Version " + card.modelData.version + "." : "")
+										+ (card.modelData.version ? " Version " + card.modelData.version + "." : ""))
 								color: Theme.text
 								wrapMode: Text.WordWrap
 							}
@@ -120,8 +120,8 @@ GeckoPage {
 
 			Text {
 				Layout.fillWidth: true
-				text: "Firmware is the small program inside a part itself. Makers that publish updates for Linux "
-					+ "offer them here, the rest update through the maker's own tool or not at all."
+				text: Theme.lines("Firmware is the small program inside a part itself. Makers that publish updates for "
+					+ "Linux offer them here, the rest update through the maker's own tool or not at all.")
 				color: Theme.muted
 				wrapMode: Text.WordWrap
 			}

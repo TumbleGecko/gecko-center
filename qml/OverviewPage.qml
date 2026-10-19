@@ -214,13 +214,11 @@ GeckoPage {
 						contentItem: RowLayout {
 							spacing: 14
 
-							Text {
+							StateMark {
 								Layout.leftMargin: 18
-								Layout.alignment: Qt.AlignVCenter
-								text: tile.modelData.state === "good" ? "✓" : "i"
-								color: tile.modelData.state === "good" ? Theme.accent : Theme.muted
-								font.pixelSize: 20
-								font.weight: Font.DemiBold
+								implicitWidth: 30
+								implicitHeight: 30
+								status: tile.modelData.state
 							}
 
 							ColumnLayout {

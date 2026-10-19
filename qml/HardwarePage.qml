@@ -23,6 +23,12 @@ GeckoPage {
 		return devices.filter(device => device.group === group && device.key !== "memory")
 	}
 
+	// The modules' own sizes add up to what is installed, a little more than Linux can use
+	function moduleHeading() {
+		const installed = inGroup("Memory").reduce((sum, module) => sum + (module.bytes || 0), 0)
+		return "Memory modules" + (installed > 0 ? "  ·  " + Math.round(installed / 1024 ** 3) + " GB installed" : "")
+	}
+
 	function celsius(device) {
 		return device.degrees === null || device.degrees === undefined ? "" : Math.round(device.degrees) + " °C"
 	}
@@ -100,7 +106,7 @@ GeckoPage {
 					Layout.fillWidth: true
 					spacing: 8
 
-					Heading { text: section.modelData === "Memory" ? "Memory modules" : section.modelData }
+					Heading { text: section.modelData === "Memory" ? page.moduleHeading() : section.modelData }
 
 					GridLayout {
 						Layout.fillWidth: true
@@ -280,7 +286,7 @@ GeckoPage {
 					Layout.fillWidth: true
 					text: modelData
 					color: Theme.muted
-					elide: Text.ElideRight
+					wrapMode: Text.WordWrap
 				}
 			}
 		}

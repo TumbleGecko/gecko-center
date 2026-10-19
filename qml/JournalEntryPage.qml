@@ -1,4 +1,4 @@
-// One problem from the logs in full, what it means, when it happened and the lines the journal has for it
+// One problem from the journal in full, what it means, when it happened and the lines the journal has for it
 import QtQuick
 import GeckoUi
 import QtQuick.Controls.Basic
@@ -8,7 +8,7 @@ GeckoPage {
 	id: page
 
 	property string problemKey
-	readonly property var problem: ((center.info.logs || {}).problems || [])
+	readonly property var problem: ((center.info.journal || {}).problems || [])
 		.find(item => item.key === problemKey) || null
 
 	function when(iso) {

@@ -34,11 +34,11 @@ guide.hardware.body=Hardware lists every part Linux can see, from the processor 
 guide.hardware.page=hardware
 guide.hardware.action=Open Hardware
 
-guide.logs.title=When something goes wrong
-guide.logs.summary=What the computer wrote down about crashes and problems, in plain words.
-guide.logs.body=Programs and the system write a short message whenever something fails. Logs gathers them for each start of the computer.\nA crash means a program closed on its own. One crash now and then is normal, a program that crashes again and again often needs an update.\nMost other problems are harmless and go away on their own. Logs explains the ones that often come up, and how often each one happened.\nPick an earlier start at the top to see what happened before the computer was last turned off, such as why it froze.\nMessages from the system itself need your password, so Logs shows your own first and asks before it shows the rest.
-guide.logs.page=logs
-guide.logs.action=Open Logs
+guide.journal.title=When something goes wrong
+guide.journal.summary=What the computer wrote down about crashes and problems, in plain words.
+guide.journal.body=Programs and the system write a short message whenever something fails. Journal gathers them for each start of the computer.\nA crash means a program closed on its own. One crash now and then is normal, a program that crashes again and again often needs an update.\nMost other problems are harmless and go away on their own. Journal explains the ones that often come up, and how often each one happened.\nPick an earlier start at the top to see what happened before the computer was last turned off, such as why it froze.\nMessages from the system itself need your password, so Journal shows your own first and asks before it shows the rest.
+guide.journal.page=journal
+guide.journal.action=Open Journal
 
 guide.drivers.title=Drivers and firmware
 guide.drivers.summary=What makes the hardware work, and when to install anything.
@@ -48,7 +48,7 @@ guide.drivers.action=Open Drivers
 
 guide.storage.title=Files and disk space
 guide.storage.summary=Where your things are, and how to make room.
-guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nSwap is room on a disk that Linux uses as extra memory when memory fills up. Storage shows how much there is and whether it suits this computer.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old logs.\nFilelight draws what takes up the space in your own folders.
+guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nSwap is room on a disk that Linux uses as extra memory when memory fills up. Storage shows how much there is and whether it suits this computer.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old system messages.\nFilelight draws what takes up the space in your own folders.
 guide.storage.page=storage
 guide.storage.action=Open Storage
 

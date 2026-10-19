@@ -7,7 +7,7 @@ from pathlib import Path
 from . import disks, look, operations, paths
 
 PACKAGE_CACHE = Path("/var/cache/zypp/packages")
-# Logs older than this are rarely read, a month still covers the last few updates
+# Messages older than this are rarely read, a month still covers the last few updates
 JOURNAL_KEEP = "4weeks"
 JOURNAL_SIZE = re.compile(r"take up ([\d.]+)([KMGT]?)")
 UNITS = {"": 1, "K": 1024, "M": 1024 ** 2, "G": 1024 ** 3, "T": 1024 ** 4}
@@ -45,7 +45,7 @@ CLEANUPS = {
 		lambda: look.folder_bytes(PACKAGE_CACHE),
 		lambda: [operations.zypper_step("Removing downloaded packages", [paths.ZYPPER, "--non-interactive", "clean",
 			"--all"])]),
-	"journal": ("System logs", "Messages the system writes as it runs, removing keeps the last four weeks.",
+	"journal": ("Old system messages", "What the system writes down as it runs, removing keeps the last four weeks.",
 		_journal_bytes,
 		lambda: [operations.Step("Removing old system logs", ["journalctl", "--vacuum-time=" + JOURNAL_KEEP],
 			root=True)]),

@@ -115,7 +115,7 @@ GeckoPage {
 						Text {
 							visible: use.modelData.advice !== ""
 							Layout.fillWidth: true
-							text: use.modelData.advice
+							text: Theme.lines(use.modelData.advice)
 							color: use.modelData.adviceGood ? Theme.accentHover : Theme.warning
 							wrapMode: Text.WordWrap
 						}

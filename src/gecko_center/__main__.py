@@ -14,7 +14,7 @@ from . import background, updates
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 PAGES = ("overview", "performance", "explore", "installed", "updates", "snapshots", "sources", "hardware", "drivers",
-	"storage", "services", "logs", "guide", "news", "settings")
+	"storage", "services", "journal", "guide", "news", "settings")
 
 
 def _parse_arguments():

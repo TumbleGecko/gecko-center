@@ -7,10 +7,9 @@ import json
 import re
 from pathlib import Path
 
-from . import look
+from . import look, memory
 
 SWAPS = Path("/proc/swaps")
-MEMINFO = Path("/proc/meminfo")
 COMMAND_LINE = Path("/proc/cmdline")
 SLEEP_STATES = Path("/sys/power/state")
 LSBLK_ARGUMENTS = ["lsblk", "--json", "--bytes", "--output",
@@ -53,16 +52,6 @@ def size_text(count):
 	return f"{count} bytes"
 
 
-def memory_text():
-	"""Memory in the same whole GB the Hardware page shows, memory is counted in powers of two."""
-	return f"{round(memory_bytes() / 1024 ** 3)} GB"
-
-
-def memory_bytes():
-	found = re.search(r"MemTotal:\s+(\d+) kB", _read(MEMINFO))
-	return int(found.group(1)) * KIBIBYTE if found else 0
-
-
 def hibernates():
 	"""Hibernation works when the kernel can sleep to disk and knows where to resume from."""
 	return "disk" in _read(SLEEP_STATES).split() and "resume=" in _read(COMMAND_LINE)
@@ -80,14 +69,15 @@ def _swap_used():
 
 def swap_advice(size):
 	"""Whether this much swap suits the computer and what to know, from its memory and whether it hibernates."""
-	memory = memory_bytes()
-	needed = memory if hibernates() else SWAP_WITHOUT_HIBERNATION
-	reason = f"hibernating needs about {memory_text()}" if hibernates() else "the computer does not hibernate"
+	installed = memory.installed_bytes()
+	needed = installed if hibernates() else SWAP_WITHOUT_HIBERNATION
+	reason = (f"hibernating needs about {memory.size_text(installed)}" if hibernates()
+		else "the computer does not hibernate")
 	if size > needed * TOO_LARGE:
 		return False, (f"This is much more than needed, since {reason}. About {round((size - needed) / 10 ** 9)} GB "
 			"of it could hold files instead.")
-	if hibernates() and size < memory:
-		return False, f"This is too small to hibernate, which needs about {memory_text()}."
+	if hibernates() and size < installed:
+		return False, f"This is too small to hibernate, which needs about {memory.size_text(installed)}."
 	return True, "This size suits this computer."
 
 
@@ -114,7 +104,8 @@ def _use(part, swap_used):
 	use = {"name": part.get("path", ""), "size": size, "sizeText": size_text(size), "advice": "", "adviceGood": True}
 	if SWAP_MOUNT in mounts:
 		good, advice = swap_advice(size)
-		about = SWAP_ABOUT.format(memory=memory_text()) + (SWAP_HIBERNATE if hibernates() else "")
+		about = SWAP_ABOUT.format(memory=memory.size_text(memory.installed_bytes()))
+		about += SWAP_HIBERNATE if hibernates() else ""
 		use.update(title="Swap", used=swap_used.get(part.get("path", ""), 0), about=about + "\n" + SWAP_TRADE,
 			advice=advice, adviceGood=good)
 	else:

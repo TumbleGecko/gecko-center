@@ -12,7 +12,7 @@ import re
 import time
 from pathlib import Path
 
-from . import look, sensors
+from . import look, memory, sensors
 
 PROC = Path("/proc")
 DRM = Path("/sys/class/drm")
@@ -264,6 +264,8 @@ class Sampler:
 		self.nvidia_usage = {}
 		self._last_time = None
 		self._last_transfers = None
+		# The modules do not change while the page shows, so they are read once
+		self._installed = memory.installed_bytes()
 
 	def _cores(self):
 		"""Busy share of each core and of all of them since the last look, from /proc/stat."""
@@ -350,20 +352,31 @@ class Sampler:
 		elapsed = now - self._last_time if self._last_time else 0
 		self._last_time = now
 		overall, cores = self._cores()
-		memory = {}
+		memory_info = {}
 		for line in _read(PROC / "meminfo").splitlines():
 			key, _, value = line.partition(":")
-			memory[key] = int(value.split()[0]) * 1024 if value.split() else 0
+			memory_info[key] = int(value.split()[0]) * 1024 if value.split() else 0
 		nvidia_cards = _nvidia_cards()
 		amd_cards = _amd_cards()
 		disk_read, disk_write, received, sent = self._rates(elapsed)
+		used = memory_info.get("MemTotal", 0) - memory_info.get("MemAvailable", 0)
+		swapped = memory_info.get("SwapTotal", 0) - memory_info.get("SwapFree", 0)
+		apps = self._apps(elapsed, max(len(cores), 1), bool(amd_cards))
+		cards = nvidia_cards + amd_cards
+		# Every memory size is written by memory.size_text, so this page says the same 32 GB as Hardware
+		for entry in apps:
+			entry["memoryText"] = memory.size_text(entry["memory"])
+			entry["gpuMemoryText"] = memory.size_text(entry["gpuMemory"]) if entry["gpuMemory"] > 0 else "–"
+		for card in cards:
+			sold = memory.size_text(memory.sold_bytes(card["memoryTotal"]))
+			card["memoryText"] = f"{memory.size_text(card['memoryUsed'])} of {sold} memory"
 		return {
 			"cpu": overall, "cores": cores, "cpuTemperature": sensors.processor_degrees(sensors.read_sensors()),
-			"memoryUsed": memory.get("MemTotal", 0) - memory.get("MemAvailable", 0),
-			"memoryTotal": memory.get("MemTotal", 0),
-			"swapUsed": memory.get("SwapTotal", 0) - memory.get("SwapFree", 0),
+			"memoryUsed": used, "memoryTotal": self._installed,
+			"memoryText": f"{memory.size_text(used)} of {memory.size_text(self._installed)}",
+			"swapUsed": swapped, "swapText": memory.size_text(swapped),
 			"diskRead": disk_read, "diskWrite": disk_write, "received": received, "sent": sent,
 			"waiting": _pressure(),
-			"gpus": nvidia_cards + amd_cards,
-			"apps": self._apps(elapsed, max(len(cores), 1), bool(amd_cards)),
+			"gpus": cards,
+			"apps": apps,
 		}

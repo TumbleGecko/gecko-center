@@ -9,8 +9,8 @@ import threading
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
-from . import (drivers, guide, hardware, health, journal, news, operations, performance, report, services, snapshots,
-	sources, storage)
+from . import (drivers, guide, hardware, hardware_history, health, journal, news, operations, performance, report,
+	services, snapshots, sources, storage)
 from .commands import Command, run_as_root
 
 EXIT_SUCCESS = 0
@@ -25,6 +25,7 @@ COLLECTORS = {
 	"report": report.share,
 	"drivers": drivers.collect,
 	"hardware": hardware.collect,
+	"hardware-history": hardware_history.collect,
 	"journal": journal.collect,
 	"storage": storage.collect,
 	"services": services.collect,
@@ -37,6 +38,7 @@ ACTIONS = {
 	"restart-service": lambda argument: services.restart_steps(*argument.split(":", 1)),
 	"stop-service": lambda argument: services.stop_steps(*argument.split(":", 1)),
 	"rollback": snapshots.rollback_steps,
+	"snapshots-remove-old": snapshots.remove_steps,
 	"source-on": lambda alias: [operations.zypper_step("Turning on " + alias, sources.switch_arguments(alias, True))],
 	"source-off": lambda alias: [operations.zypper_step("Turning off " + alias, sources.switch_arguments(alias, False))],
 	"packages-remove": operations.remove_packages_steps,
@@ -97,6 +99,8 @@ class Center(QObject):
 			command.finished.connect(lambda code, text: self._store(kind, snapshots.snapshots_from_json(text)))
 		elif kind == "news":
 			self._read_news()
+		elif kind == "old-snapshots":
+			self._read_old_snapshots()
 		elif kind == "guide":
 			self._store(kind, guide.read_guide())
 
@@ -119,6 +123,24 @@ class Center(QObject):
 				return
 			self._store("journal", dict(shown, boot=boot, everyone=True, problems=journal.problems_from_json(text)))
 		run_as_root(self._root, journal.problems_arguments(boot), self).finished.connect(take)
+
+	def _read_old_snapshots(self):
+		"""How much the month old snapshots hold, read as root and only when asked, it takes about half a minute."""
+		command = run_as_root(self._root, snapshots.SPACE_ARGUMENTS, self)
+		command.finished.connect(lambda code, text: self._store("old-snapshots", snapshots.old_snapshots(text)
+			if code == EXIT_SUCCESS else self._info.get("old-snapshots") or {"known": False}))
+
+	@Slot()
+	def readHardwareHistoryAsRoot(self):
+		"""What was plugged in, through sudo, for when you may not read the system journal yourself yet."""
+		if "hardware-history" in self._reading:
+			return
+		self._reading.add("hardware-history")
+		self.readingChanged.emit()
+		shown = self._info.get("hardware-history") or {"readable": False, "events": []}
+		command = run_as_root(self._root, hardware_history.arguments(), self)
+		command.finished.connect(lambda code, text: self._store("hardware-history", shown if code != EXIT_SUCCESS
+			else {"readable": True, "events": hardware_history.events_from_json(text)}))
 
 	@Slot(result=bool)
 	def journalNeedsPassword(self):
@@ -159,7 +181,7 @@ class Center(QObject):
 
 	@Slot(str, result=bool)
 	def readNeedsPassword(self, kind):
-		return kind == "snapshots" and self._root.needsPassword()
+		return kind in ("snapshots", "old-snapshots") and self._root.needsPassword()
 
 	def _download(self, url, done):
 		reply = self._network.get(QNetworkRequest(QUrl(url)))

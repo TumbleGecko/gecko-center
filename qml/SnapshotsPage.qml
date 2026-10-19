@@ -85,14 +85,17 @@ GeckoPage {
 					Layout.alignment: Qt.AlignVCenter
 					spacing: 0
 
+					// The running system is now, its own date is when it was last restored and would look old
 					Text {
-						text: Qt.formatDateTime(new Date(row.modelData.date.replace(" ", "T")), "d MMM")
-						color: Theme.textStrong
+						text: row.modelData.running ? "Now" : row.modelData.next ? "Next start"
+							: Qt.formatDateTime(new Date(row.modelData.date.replace(" ", "T")), "d MMM")
+						color: row.current ? Theme.accentHover : Theme.textStrong
 						font.pixelSize: 19
 						font.weight: Font.DemiBold
 					}
 
 					Text {
+						visible: !row.current
 						text: Qt.formatDateTime(new Date(row.modelData.date.replace(" ", "T")), "hh:mm")
 						color: Theme.muted
 					}

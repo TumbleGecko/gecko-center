@@ -3,14 +3,13 @@
 Each check gives a state, a sentence and the details behind it, and names the one action that helps, if any.
 """
 
-import math
 import os
 import platform
 import re
 from datetime import date, datetime
 from pathlib import Path
 
-from . import drivers, look, paths, performance, services, sources, storage, updates
+from . import drivers, look, memory, paths, performance, services, sources, storage, updates
 
 # The states from best to worst, the page shows the worst first
 GOOD = "good"
@@ -31,7 +30,6 @@ OS_RELEASE = Path("/etc/os-release")
 # The display server the session runs on, as logind names it in XDG_SESSION_TYPE
 SESSION_NAMES = {"wayland": "Wayland", "x11": "X11"}
 KERNEL_MODULES = Path("/usr/lib/modules")
-MEMORY_BLOCKS = Path("/sys/devices/system/memory")
 SNAPPER_ROOT_CONFIG = Path("/etc/snapper/configs/root")
 # Timers openSUSE enables to keep a Btrfs system and its snapshots healthy
 MAINTENANCE_TIMERS = {
@@ -126,7 +124,7 @@ def check_disk():
 	worst = GOOD
 	details = []
 	for place in storage.places():
-		details.append(f"{place['label']}  {place['free'] / GIGABYTE:.0f} GB free of {place['total'] / GIGABYTE:.0f} GB")
+		details.append(f"{place['label']}  {place['freeText']} free of {place['totalText']}")
 		if place["free"] < DISK_PROBLEM_BYTES:
 			worst = PROBLEM
 		elif (place["free"] < DISK_WARNING_BYTES or place["free"] / place["total"] < DISK_WARNING_SHARE) \
@@ -209,10 +207,7 @@ def check_maintenance(root_type):
 
 
 def _memory():
-	"""The memory the box names, the kernel's memory blocks rounded up past what the firmware keeps for itself."""
-	block_bytes = int((MEMORY_BLOCKS / "block_size_bytes").read_text(), 16)
-	online = sum(1 for block in MEMORY_BLOCKS.glob("memory*/online") if block.read_text().strip() == "1")
-	return f"{math.ceil(online * block_bytes / GIGABYTE)} GB"
+	return memory.size_text(memory.installed_bytes())
 
 
 def _processor():
@@ -227,7 +222,7 @@ def _graphics():
 	cards = performance.graphics_cards()
 	if cards:
 		version = drivers.nvidia_version()
-		return "\n".join(f"{card['name']}  ·  {card['memoryTotal'] / 1e9:.0f} GB"
+		return "\n".join(f"{card['name']}  ·  {memory.size_text(memory.sold_bytes(card['memoryTotal']))}"
 			+ (f"  ·  Driver {version}" if version and "NVIDIA" in card["name"] else "") for card in cards)
 	return "\n".join(card["name"] for card in drivers.graphics_cards())
 

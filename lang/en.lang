@@ -30,7 +30,7 @@ guide.sources.action=Open Sources
 
 guide.hardware.title=What is inside
 guide.hardware.summary=Each part of the computer, how it is doing and where its details are.
-guide.hardware.body=Hardware lists every part Linux can see, from the processor and memory to the screens, disks and what is plugged in.\nA temperature next to a part is how warm it is right now. Processors run at 40 to 95 °C and disks below 70 °C.\nClicking a part shows everything known about it, such as its maker, model, driver and firmware version. Each line can be selected and copied into a search.\nControllers are the parts on the motherboard that connect the rest, such as USB and disk controllers.\nDrivers is where to install or update what makes a part work.
+guide.hardware.body=Hardware lists every part Linux can see, from the processor and memory to the screens, disks and what is plugged in.\nA temperature next to a part is how warm it is right now. Processors run at 40 to 95 °C and disks below 70 °C.\nClicking a part shows everything known about it, such as its maker, model, driver and firmware version. Each line can be selected and copied into a search.\nControllers are the parts on the motherboard that connect the rest, such as USB and disk controllers.\nPlugged in and out lists every USB device that came or went in the last three months, such as a keyboard that keeps reconnecting.\nDrivers is where to install or update what makes a part work.
 guide.hardware.page=hardware
 guide.hardware.action=Open Hardware
 
@@ -48,7 +48,7 @@ guide.drivers.action=Open Drivers
 
 guide.storage.title=Files and disk space
 guide.storage.summary=Where your things are, and how to make room.
-guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nSwap is room on a disk that Linux uses as extra memory when memory fills up. Storage shows how much there is and whether it suits this computer.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old system messages.\nFilelight draws what takes up the space in your own folders.
+guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nSwap is room on a disk that Linux uses as extra memory when memory fills up. Storage shows how much there is and whether it suits this computer.\nSnapshots take room too. The system removes old ones on its own, and Storage can remove those older than a month sooner.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old system messages.\nFilelight draws what takes up the space in your own folders.
 guide.storage.page=storage
 guide.storage.action=Open Storage
 

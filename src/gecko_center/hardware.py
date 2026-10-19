@@ -8,7 +8,7 @@ import math
 import re
 from pathlib import Path
 
-from . import disks, drivers, look, performance
+from . import disks, drivers, look, memory, performance
 from . import sensors as sensors_module
 
 SYS = Path("/sys")
@@ -18,8 +18,6 @@ NETWORK = SYS / "class" / "net"
 POWER = SYS / "class" / "power_supply"
 DRM = SYS / "class" / "drm"
 PCI = SYS / "bus" / "pci" / "devices"
-I2C_DRIVERS = SYS / "bus" / "i2c" / "drivers"
-MEMINFO = Path("/proc/meminfo")
 
 # Makers put these in place of a product name on boards sold on their own
 PLACEHOLDERS = {"", "system product name", "to be filled by o.e.m.", "default string", "not applicable"}
@@ -27,15 +25,6 @@ PLACEHOLDERS = {"", "system product name", "to be filled by o.e.m.", "default st
 CHASSIS = {3: "Desktop", 4: "Desktop", 6: "Tower", 7: "Tower", 8: "Laptop", 9: "Laptop", 10: "Laptop", 14: "Laptop",
 	13: "All in one", 30: "Tablet", 31: "Convertible", 32: "Convertible", 35: "Mini PC", 36: "Mini PC"}
 CPU_MAKERS = {"AuthenticAMD": "AMD", "GenuineIntel": "Intel"}
-
-# Each memory module's SPD chip, by its driver, with where the maker code and part number sit, DDR5 then DDR4
-SPD_LAYOUTS = {"spd5118": (512, 521, 551), "ee1004": (320, 329, 349)}
-# DDR5 SPD bytes for the module's size, from JEDEC JESD400-5, a die's density in Gb by its code
-DDR5_DENSITY = {1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, 8: 64}
-DDR5_DIES = {0: 1, 2: 2, 3: 4, 4: 8, 5: 16}
-# JEDEC JEP106 maker codes as SPD stores them, the bank byte first with its parity bit
-MEMORY_MAKERS = {"80ce": "Samsung", "80ad": "SK hynix", "802c": "Micron", "0198": "Kingston", "029e": "Corsair",
-	"04cd": "G.Skill", "04cb": "ADATA", "04ef": "TeamGroup", "859b": "Crucial"}
 
 # The PCI class code's first two digits, bridges are wiring, not parts, so they are not listed
 PCI_GROUPS = {"03": "Graphics", "04": "Sound", "02": "Network", "0d": "Network"}
@@ -169,60 +158,26 @@ def _processor(sensors, firmware):
 		if part))]
 
 
-def _ddr5_bytes(data):
-	"""The module's size from its SPD, channels times dies per channel times what each die holds."""
-	density = DDR5_DENSITY.get(data[4] & 0x1F)
-	dies = DDR5_DIES.get(data[4] >> 5)
-	if not density or not dies:
-		return 0
-	width = 4 << ((data[6] >> 5) & 0x7)
-	ranks = ((data[234] >> 3) & 0x7) + 1
-	channels = ((data[235] >> 5) & 0x3) + 1
-	bus = 8 << (data[235] & 0x7)
-	return channels * bus // width * dies * density * ranks * 1024 ** 3 // 8
-
-
-def _memory_modules(sensors):
-	"""Each memory module that shows its SPD chip, read as you since the chips are readable by everyone."""
-	modules = []
-	for driver, (maker_at, part_at, part_end) in SPD_LAYOUTS.items():
-		for chip in sorted((I2C_DRIVERS / driver).glob("*-*")):
-			try:
-				data = (chip / "eeprom").read_bytes()
-			except OSError:
-				continue
-			part = data[part_at:part_end].decode("ascii", errors="ignore").strip()
-			maker = MEMORY_MAKERS.get(data[maker_at:maker_at + 2].hex(), "")
-			slot = len(modules) + 1
-			kind = "DDR5" if driver == "spd5118" else "DDR4"
-			# Only the DDR5 layout is read for a size, DDR4 modules show without one
-			size = _ddr5_bytes(data) if kind == "DDR5" else 0
-			size_text = f"{size // 1024 ** 3} GB" if size else ""
-			module = _device(f"memory:{chip.name}", "Memory", part or f"Module {slot}", "Memory module",
-				maker, [("Size", size_text), ("Maker", maker), ("Part number", part), ("Kind", kind),
-					(TEMPERATURE, sensors_module.device_degrees(sensors, _resolved(chip)))],
-				short=" ".join(word for word in (size_text, maker, kind) if word), detail=part)
-			modules.append(dict(module, bytes=size))
-	return modules
+def _memory_module(module, slot, sensors):
+	size = memory.size_text(module["bytes"]) if module["bytes"] else ""
+	return _device(f"memory:{module['chip'].name}", "Memory", module["part"] or f"Module {slot}", "Memory module",
+		module["maker"], [("Size", size), ("Maker", module["maker"]), ("Part number", module["part"]),
+			("Kind", module["kind"]), (TEMPERATURE, sensors_module.device_degrees(sensors, _resolved(module["chip"])))],
+		short=" ".join(word for word in (size, module["maker"], module["kind"]) if word), detail=module["part"])
 
 
 def _memory(sensors):
-	found = re.search(r"MemTotal:\s+(\d+) kB", _read(MEMINFO))
-	total = int(found.group(1)) * 1024 if found else 0
-	modules = _memory_modules(sensors)
-	# What Linux reports is a little below what the modules hold, since the firmware keeps a part for itself
-	total_text = f"{total / 1024 ** 3:.0f} GB" if total else ""
-	summary = total_text + (f" in {look.plural(len(modules), 'module')}" if modules else "")
-	kinds = sorted({module["short"] for module in modules})
+	found = memory.modules()
+	cards = [_memory_module(module, slot, sensors) for slot, module in enumerate(found, 1)]
+	installed = memory.size_text(memory.installed_bytes(found))
+	kinds = sorted({card["short"] for card in cards})
 	# The tile shows the warmest module, each module's own is on its card
-	warmth = [module["degrees"] for module in modules if module["degrees"] is not None]
-	detail = f"{len(modules)} × {kinds[0]}" if len(kinds) == 1 else look.plural(len(modules), "module") if modules else ""
-	installed = sum(module["bytes"] for module in modules)
-	return [_device("memory", "Memory", "Memory", "All memory", detail or summary, [
-		("Installed", f"{installed // 1024 ** 3} GB" if installed else ""),
-		("Usable", total_text), ("Modules", str(len(modules)) if modules else ""),
-		(TEMPERATURE, max(warmth) if warmth else None),
-	], short=total_text)] + modules
+	warmth = [card["degrees"] for card in cards if card["degrees"] is not None]
+	detail = f"{len(cards)} × {kinds[0]}" if len(kinds) == 1 else look.plural(len(cards), "module") if cards else ""
+	return [_device("memory", "Memory", "Memory", "All memory", detail, [
+		("Installed", installed), ("Usable by Linux", memory.size_text(memory.usable_bytes())),
+		("Modules", str(len(cards)) if cards else ""), (TEMPERATURE, max(warmth) if warmth else None),
+	], short=installed)] + cards
 
 
 # Parts on the PCI bus and USB ==================================================
@@ -443,7 +398,7 @@ def _firmware(devices):
 		entries.append(_device(f"firmware:{item.get('DeviceId', name)}", "Firmware", name, "Firmware",
 			"Version " + item["Version"] if item.get("Version") else "", [
 				("Maker", item.get("Vendor", "")), ("Version", item.get("Version", "")),
-				("Updates", "From the LVFS through fwupd" if updatable else "Not through fwupd"),
+				("Updates", drivers.UPDATED_ON_PAGE if updatable else drivers.updated_by(item)),
 			]))
 	if certificates:
 		entries.append(_device("firmware:secure-boot", "Firmware", "Secure Boot keys", "Firmware",

@@ -279,7 +279,8 @@ ApplicationWindow {
 				if (window.detail)
 					return window.detail.guide ? guideTopicPage : window.detail.snapshot ? snapshotPage
 						: window.detail.sourceAlias ? sourcePage : window.detail.device ? devicePage
-						: window.detail.problem ? journalEntryPage : detailPage
+						: window.detail.problem ? journalEntryPage
+						: window.detail.hardwareHistory ? hardwareHistoryPage : detailPage
 				return content.pages[window.page] || content.pages.overview
 			}
 
@@ -325,5 +326,6 @@ ApplicationWindow {
 	Component { id: snapshotPage; SnapshotPage { number: window.detail.snapshot } }
 	Component { id: sourcePage; SourcePage { sourceAlias: window.detail.sourceAlias } }
 	Component { id: devicePage; DevicePage { deviceKey: window.detail.device } }
+	Component { id: hardwareHistoryPage; HardwareHistoryPage {} }
 	Component { id: journalEntryPage; JournalEntryPage { problemKey: window.detail.problem } }
 }

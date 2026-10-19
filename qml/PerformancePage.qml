@@ -182,7 +182,7 @@ GeckoPage {
 
 			Tile {
 				label: "Memory"
-				value: page.report ? Theme.size(page.report.memoryUsed) + " of " + Theme.size(page.report.memoryTotal) : ""
+				value: page.report ? page.report.memoryText : ""
 
 				Meter {
 					Layout.fillWidth: true
@@ -192,7 +192,7 @@ GeckoPage {
 				Text {
 					Layout.fillWidth: true
 					visible: !!page.report && page.report.swapUsed > 0
-					text: page.report ? Theme.size(page.report.swapUsed) + " moved to swap on a disk" : ""
+					text: page.report ? page.report.swapText + " moved to swap on a disk" : ""
 					color: Theme.muted
 					elide: Text.ElideRight
 				}
@@ -258,7 +258,7 @@ GeckoPage {
 
 					Text {
 						Layout.fillWidth: true
-						text: Theme.size(modelData.memoryUsed) + " of " + Theme.size(modelData.memoryTotal) + " memory"
+						text: modelData.memoryText || ""
 						color: Theme.muted
 						elide: Text.ElideRight
 					}
@@ -362,9 +362,9 @@ GeckoPage {
 							[row.modelData.name, true, 0],
 							[page.percent(row.modelData.cpu), false, row.modelData.cpu / 100],
 							[row.modelData.gpu > 0 ? page.percent(row.modelData.gpu) : "–", false, row.modelData.gpu / 100],
-							[row.modelData.gpuMemory > 0 ? Theme.size(row.modelData.gpuMemory) : "–", false,
+							[row.modelData.gpuMemoryText, false,
 								page.graphicsMemory > 0 ? row.modelData.gpuMemory / page.graphicsMemory : 0],
-							[Theme.size(row.modelData.memory), false,
+							[row.modelData.memoryText, false,
 								page.report ? row.modelData.memory / page.report.memoryTotal : 0]
 						]
 

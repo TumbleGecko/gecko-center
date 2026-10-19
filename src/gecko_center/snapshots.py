@@ -6,6 +6,7 @@ Rolling back follows snapper rollback, https://doc.opensuse.org/documentation/le
 
 import json
 import re
+from datetime import datetime, timedelta
 
 from . import look, operations
 
@@ -23,6 +24,10 @@ printf '@@history\n'
 grep -E '^[^|]*[|](install|remove )[|]' /var/log/zypp/history 2>/dev/null
 """
 LIST_ARGUMENTS = ["sh", "-c", READ_SCRIPT]
+# The sizes on their own, for Storage, read only when asked since snapper takes about half a minute for them
+SPACE_ARGUMENTS = ["snapper", "--jsonout", "list", "--columns", "number,type,pre-number,date,default,active,used-space"]
+# Snapshots older than this are offered for removal, a month covers going back after any recent update
+OLD_DAYS = 30
 
 # What made each snapshot, matched against snapper's own description
 REASONS = [
@@ -185,6 +190,35 @@ def snapshots_from_json(text):
 		})
 	snapshots.sort(key=lambda snapshot: (not snapshot["running"], not snapshot["next"], -snapshot["number"]))
 	return {"known": True, "problem": "", "snapshots": snapshots}
+
+
+def old_snapshots(text, now=None):
+	"""Snapshots older than a month that can go, a before and after pair together, never the running or next one.
+
+	Each one's size is what only it holds, so removing several frees at least their sum.
+	"""
+	start = (text or "").find("{")
+	listing = json.loads(text[start:]).get("root", []) if start >= 0 else []
+	limit = (now or datetime.now()) - timedelta(days=OLD_DAYS)
+	by_number = {entry["number"]: entry for entry in listing}
+	kept = {entry["number"] for entry in listing if entry["number"] == 0 or entry.get("active") or entry.get("default")}
+
+	def started(entry):
+		pre = by_number.get(entry.get("pre-number")) if entry.get("type") == "post" else None
+		return datetime.fromisoformat((pre or entry)["date"]) if (pre or entry).get("date") else None
+
+	old = [entry for entry in listing if entry["number"] not in kept and started(entry) and started(entry) < limit]
+	# A pair goes together, so one whose other half must stay is kept too
+	pairs = {entry["number"]: entry.get("pre-number") for entry in old if entry.get("type") == "post"}
+	old = [entry for entry in old if entry["number"] not in pairs or pairs[entry["number"]] not in kept]
+	return {"known": start >= 0, "count": len(old), "total": len([entry for entry in listing if entry["number"]]),
+		"bytes": sum(entry.get("used-space") or 0 for entry in old),
+		"numbers": " ".join(str(entry["number"]) for entry in old),
+		"oldest": min((entry["date"] for entry in old), default="")}
+
+
+def remove_steps(numbers):
+	return [operations.Step("Removing old snapshots", ["snapper", "delete", *numbers.split()], root=True)]
 
 
 def rollback_steps(number):

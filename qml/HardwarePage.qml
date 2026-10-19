@@ -23,10 +23,10 @@ GeckoPage {
 		return devices.filter(device => device.group === group && device.key !== "memory")
 	}
 
-	// The modules' own sizes add up to what is installed, a little more than Linux can use
+	// The installed size the memory tile shows too, so both say the same
 	function moduleHeading() {
-		const installed = inGroup("Memory").reduce((sum, module) => sum + (module.bytes || 0), 0)
-		return "Memory modules" + (installed > 0 ? "  ·  " + Math.round(installed / 1024 ** 3) + " GB installed" : "")
+		const total = devices.find(device => device.key === "memory")
+		return "Memory modules" + (total ? "  ·  " + total.short + " installed" : "")
 	}
 
 	function celsius(device) {
@@ -44,7 +44,21 @@ GeckoPage {
 	busy: center.reading.includes("hardware")
 	empty: !report
 
-	Component.onCompleted: center.read("hardware")
+	Component.onCompleted: {
+		center.read("hardware")
+		center.read("hardware-history")
+	}
+
+	readonly property var history: center.info["hardware-history"] || null
+
+	function openHistory() {
+		if (history && history.readable) {
+			window.openDetail({ key: "hardware-history", hardwareHistory: true })
+			return
+		}
+		window.withPassword(center.journalNeedsPassword(), "Reading what was plugged in needs your password.",
+			"Show", () => center.readHardwareHistoryAsRoot())
+	}
 
 	Flickable {
 		id: scroll
@@ -68,6 +82,61 @@ GeckoPage {
 				name: page.computer ? page.computer.short + "  ·  " + page.computer.kind : ""
 				summary: page.computer ? page.computer.detail : ""
 				onClicked: page.open(page.computer)
+			}
+
+			// The newest plugging in and out, opening the whole history
+			AbstractButton {
+				id: historyBox
+				visible: !!page.history
+				Layout.fillWidth: true
+				implicitHeight: historyLines.implicitHeight + 32
+				hoverEnabled: true
+				Accessible.name: "What was plugged in and out"
+				onClicked: page.openHistory()
+
+				background: Rectangle {
+					radius: 12
+					color: historyBox.down ? "#101712" : historyBox.hovered ? "#172219" : Theme.rail
+					border.color: historyBox.hovered ? "#355040" : Theme.line
+					Behavior on color { ColorAnimation { duration: Theme.quick } }
+				}
+
+				contentItem: RowLayout {
+					spacing: 12
+
+					ColumnLayout {
+						id: historyLines
+						Layout.leftMargin: 18
+						Layout.fillWidth: true
+						spacing: 4
+
+						Text {
+							text: "Plugged in and out"
+							color: Theme.muted
+						}
+
+						Text {
+							visible: !!page.history && (!page.history.readable || page.history.events.length === 0)
+							Layout.fillWidth: true
+							text: !page.history ? "" : !page.history.readable
+								? "Shows after you log in again, or now with your password."
+								: "Nothing was plugged in or out in the last three months."
+							color: Theme.text
+							wrapMode: Text.WordWrap
+						}
+
+						Repeater {
+							model: page.history && page.history.readable ? page.history.events.slice(0, 3) : []
+
+							delegate: HistoryLine {}
+						}
+					}
+
+					MoreMark {
+						Layout.rightMargin: 16
+						lit: historyBox.hovered
+					}
+				}
 			}
 
 			GridLayout {

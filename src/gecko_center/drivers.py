@@ -103,6 +103,14 @@ CERTIFICATE_PLUGINS = ("uefi_kek", "uefi_pk", "uefi_db", "uefi_dbx")
 # How firmware that fwupd cannot update gets its updates, by the fwupd plugin that found it
 UPDATED_BY = {"cpu": "With system updates", "pci_psp": "With the motherboard firmware",
 	"tpm": "With the motherboard firmware"}
+NOT_THROUGH_LINUX = "Not through Linux"
+# What Hardware says about firmware the Drivers page can update, the same place a person goes for it
+UPDATED_ON_PAGE = "On the Drivers page"
+
+
+def updated_by(item):
+	"""How firmware Drivers cannot update gets its updates, in the words both pages use."""
+	return UPDATED_BY.get(item.get("Plugin", ""), NOT_THROUGH_LINUX)
 
 
 def fwupd_devices():
@@ -126,7 +134,7 @@ def all_firmware(updates):
 		found.append({"id": item.get("DeviceId", ""), "name": item["Name"], "vendor": item.get("Vendor", ""),
 			"current": item.get("Version", ""), "update": update,
 			"updatable": "updatable" in (item.get("Flags") or []),
-			"updatedBy": UPDATED_BY.get(item.get("Plugin", ""), "Not through Linux")})
+			"updatedBy": updated_by(item)})
 	return sorted(found, key=lambda device: device["update"] is None)
 
 

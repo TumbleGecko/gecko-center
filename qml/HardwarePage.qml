@@ -148,9 +148,14 @@ GeckoPage {
 						}
 
 						Text {
-							Layout.rightMargin: 12
 							text: firmwareRow.modelData.summary
 							color: Theme.muted
+						}
+
+						MoreMark {
+							Layout.rightMargin: 12
+							font.pixelSize: 22
+							lit: firmwareRow.hovered
 						}
 					}
 				}
@@ -184,12 +189,20 @@ GeckoPage {
 							color: controller.down ? "#101712" : controller.hovered ? "#172219" : "transparent"
 						}
 
-						contentItem: Text {
-							leftPadding: 12
-							text: controller.modelData.short
-							color: Theme.muted
-							elide: Text.ElideRight
-							verticalAlignment: Text.AlignVCenter
+						contentItem: RowLayout {
+							Text {
+								Layout.leftMargin: 12
+								Layout.fillWidth: true
+								text: controller.modelData.short
+								color: Theme.muted
+								elide: Text.ElideRight
+							}
+
+							MoreMark {
+								Layout.rightMargin: 12
+								font.pixelSize: 22
+								lit: controller.hovered
+							}
 						}
 					}
 				}
@@ -228,6 +241,7 @@ GeckoPage {
 			anchors.right: parent.right
 			anchors.top: parent.top
 			anchors.margins: 18
+			anchors.rightMargin: 44
 			spacing: 4
 
 			RowLayout {
@@ -269,6 +283,13 @@ GeckoPage {
 					elide: Text.ElideRight
 				}
 			}
+		}
+
+		MoreMark {
+			anchors.right: parent.right
+			anchors.rightMargin: 18
+			anchors.verticalCenter: parent.verticalCenter
+			lit: tile.hovered
 		}
 	}
 
@@ -315,10 +336,14 @@ GeckoPage {
 			}
 
 			Text {
-				Layout.rightMargin: 16
 				visible: text !== ""
 				text: page.celsius(card.modelData)
 				color: card.modelData.hot ? Theme.warning : Theme.accentHover
+			}
+
+			MoreMark {
+				Layout.rightMargin: 16
+				lit: card.hovered
 			}
 		}
 	}

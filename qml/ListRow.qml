@@ -48,11 +48,15 @@ AbstractButton {
 		}
 
 		Text {
-			Layout.rightMargin: 18
 			visible: row.note !== ""
 			text: row.note
 			color: Theme.accentHover
 			font.pixelSize: Theme.smallSize
+		}
+
+		MoreMark {
+			Layout.rightMargin: 18
+			lit: row.hovered
 		}
 	}
 }

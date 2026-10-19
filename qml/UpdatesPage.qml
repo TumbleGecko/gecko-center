@@ -280,6 +280,8 @@ GeckoPage {
 
 				required property var modelData
 				readonly property bool opensPage: !modelData.header && (!modelData.flatpak || modelData.appKey !== "")
+				// The arrow that shows a row opens a page takes this much room at the right edge
+				readonly property real markRoom: opensPage ? 32 : 0
 
 				width: list.width - 16
 				height: modelData.header ? 52 : modelData.flatpak ? 52 : 36
@@ -342,7 +344,7 @@ GeckoPage {
 					anchors.right: parent.right
 					anchors.bottom: parent.bottom
 					anchors.bottomMargin: 6
-					anchors.rightMargin: row.modelData.flatpak ? update.width + 16 : 12
+					anchors.rightMargin: (row.modelData.flatpak ? update.width + 16 : 12) + row.markRoom
 					width: parent.width * 0.43 - anchors.rightMargin
 					horizontalAlignment: Text.AlignRight
 					from: row.modelData.oldVersion || ""
@@ -355,6 +357,7 @@ GeckoPage {
 					id: update
 					visible: !!row.modelData.flatpak
 					anchors.right: parent.right
+					anchors.rightMargin: row.markRoom
 					anchors.verticalCenter: parent.verticalCenter
 					implicitHeight: 40
 					leftPadding: 18
@@ -363,6 +366,15 @@ GeckoPage {
 					text: "Update"
 					Accessible.name: "Update " + row.modelData.name
 					onClicked: page.updateFlatpak(row.modelData.flatpak)
+				}
+
+				MoreMark {
+					visible: row.opensPage
+					anchors.right: parent.right
+					anchors.rightMargin: 4
+					anchors.verticalCenter: parent.verticalCenter
+					font.pixelSize: 22
+					lit: row.hovered
 				}
 			}
 		}

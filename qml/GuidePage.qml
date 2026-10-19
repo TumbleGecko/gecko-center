@@ -44,6 +44,7 @@ GeckoPage {
 				anchors.right: parent.right
 				anchors.top: parent.top
 				anchors.margins: 20
+				anchors.rightMargin: 56
 				spacing: 4
 
 				Text {
@@ -60,6 +61,13 @@ GeckoPage {
 					color: Theme.muted
 					wrapMode: Text.WordWrap
 				}
+			}
+
+			MoreMark {
+				anchors.right: parent.right
+				anchors.rightMargin: 20
+				anchors.verticalCenter: parent.verticalCenter
+				lit: topic.hovered
 			}
 		}
 

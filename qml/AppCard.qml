@@ -41,7 +41,6 @@ AbstractButton {
 
 		ColumnLayout {
 			Layout.fillWidth: true
-			Layout.rightMargin: 16
 			Layout.alignment: Qt.AlignVCenter
 			spacing: 4
 
@@ -69,6 +68,11 @@ AbstractButton {
 				font.pixelSize: Theme.smallSize
 				elide: Text.ElideRight
 			}
+		}
+
+		MoreMark {
+			Layout.rightMargin: 16
+			lit: card.hovered
 		}
 	}
 }

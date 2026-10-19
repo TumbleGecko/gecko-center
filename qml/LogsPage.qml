@@ -132,28 +132,36 @@ GeckoPage {
 							Behavior on color { ColorAnimation { duration: Theme.quick } }
 						}
 
-						contentItem: ColumnLayout {
-							id: crashLines
-							spacing: 4
-
-							Text {
-								Layout.leftMargin: 18
-								Layout.rightMargin: 18
+						contentItem: RowLayout {
+							ColumnLayout {
+								id: crashLines
 								Layout.fillWidth: true
-								text: crash.modelData.source
-								color: Theme.textStrong
-								font.pixelSize: 20
-								font.weight: Font.DemiBold
-								elide: Text.ElideRight
+								spacing: 4
+
+								Text {
+									Layout.leftMargin: 18
+									Layout.rightMargin: 18
+									Layout.fillWidth: true
+									text: crash.modelData.source
+									color: Theme.textStrong
+									font.pixelSize: 20
+									font.weight: Font.DemiBold
+									elide: Text.ElideRight
+								}
+
+								Text {
+									Layout.leftMargin: 18
+									Layout.rightMargin: 18
+									Layout.fillWidth: true
+									text: page.times(crash.modelData.count) + ", last " + page.when(crash.modelData.last)
+									color: Theme.warning
+									elide: Text.ElideRight
+								}
 							}
 
-							Text {
-								Layout.leftMargin: 18
+							MoreMark {
 								Layout.rightMargin: 18
-								Layout.fillWidth: true
-								text: page.times(crash.modelData.count) + ", last " + page.when(crash.modelData.last)
-								color: Theme.warning
-								elide: Text.ElideRight
+								lit: crash.hovered
 							}
 						}
 					}
@@ -210,7 +218,6 @@ GeckoPage {
 						}
 
 						ColumnLayout {
-							Layout.rightMargin: 18
 							spacing: 2
 
 							Text {
@@ -225,6 +232,11 @@ GeckoPage {
 								color: Theme.muted
 								font.pixelSize: Theme.smallSize
 							}
+						}
+
+						MoreMark {
+							Layout.rightMargin: 18
+							lit: row.hovered
 						}
 					}
 				}

@@ -438,6 +438,12 @@ GeckoPage {
 							visible: !row.isPackage
 							Layout.fillWidth: true
 						}
+
+						MoreMark {
+							visible: row.isPackage
+							font.pixelSize: 22
+							lit: row.hovered
+						}
 					}
 
 					Row {

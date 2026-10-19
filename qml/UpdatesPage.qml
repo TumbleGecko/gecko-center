@@ -12,7 +12,9 @@ GeckoPage {
 	readonly property var flatpaks: lastCheck.flatpak || []
 	readonly property bool ownJob: window.jobOwner === "updates"
 	readonly property bool running: ownJob && bridge.busy
+	// A job that went well gives the page back to the list, only a failure or a restart has more to say
 	readonly property bool finished: ownJob && window.jobResult !== null && !bridge.busy
+		&& (!window.jobResult.succeeded || window.jobResult.reboot)
 	readonly property bool hasProblem: system !== null && system !== undefined && system.problem !== ""
 	readonly property string view: {
 		if (running)
@@ -208,7 +210,7 @@ GeckoPage {
 						"current": "✓  Everything is up to date.",
 						"problem": "This update needs a choice from you.",
 						"finished": page.finished && window.jobResult.succeeded
-							? "✓  Everything is updated." : "The update stopped."
+							? "✓  The update is installed." : "The update stopped."
 					})[page.view] || ""
 				}
 

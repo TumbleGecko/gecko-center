@@ -6,7 +6,7 @@ guide.tumbleweed.action=See your system
 
 guide.updates.title=Updating the right way
 guide.updates.summary=One button updates everything, and why other ways can break things.
-guide.updates.body=Tumbleweed moves forward as a whole, so all its packages must update together.\nThe Update all button on the Updates page does exactly that, the same as the command zypper dup that openSUSE asks for.\nGuides on the internet sometimes say zypper update or point to the Discover app. Both can leave half the system on the old snapshot, so this computer turns them off.\nUpdate about once a week. The longer you wait, the bigger the next update gets.\nAfter an update with a new Linux kernel, restart when it suits you. Until then the old one keeps running.\nFlatpak apps can also be updated one at a time, because each of them carries its own parts.
+guide.updates.body=Tumbleweed moves forward as a whole, so all its packages must update together.\nThe Update all button on the Updates page does exactly that, the same as the command zypper dup that openSUSE asks for.\nGuides on the internet sometimes say zypper update or point to the Discover app. Both can leave half the system on the old snapshot.\nUpdate about once a week. The longer you wait, the bigger the next update gets.\nAfter an update with a new Linux kernel, restart when it suits you. Until then the old one keeps running.\nFlatpak apps can also be updated one at a time, because each of them carries its own parts.
 guide.updates.page=updates
 guide.updates.action=Open Updates
 

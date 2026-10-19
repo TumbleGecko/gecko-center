@@ -262,14 +262,6 @@ GeckoPage {
 			}
 		}
 
-		Text {
-			visible: page.view === "pending" && !!page.system && page.system.count > 0
-			Layout.fillWidth: true
-			text: "Tumbleweed updates the whole system together, so system updates cannot be picked one by one."
-			color: Theme.muted
-			wrapMode: Text.WordWrap
-		}
-
 		ListView {
 			id: list
 			visible: page.view === "pending"

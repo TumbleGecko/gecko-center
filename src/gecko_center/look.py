@@ -4,15 +4,23 @@ import os
 import subprocess
 
 
-def run(arguments):
-	"""Run a program with English output, a missing program counts as one that printed nothing."""
+EXIT_TIMED_OUT = 124
+
+
+def run(arguments, seconds=None):
+	"""Run a program with English output, a missing program counts as one that printed nothing.
+
+	With seconds given, a program still running after that long is stopped and counts as one that printed nothing.
+	"""
 	environment = dict(os.environ, LC_ALL="C.UTF-8")
 	# The window's own Qt platform must not leak into the Qt programs it asks, such as plasmashell
 	environment.pop("QT_QPA_PLATFORM", None)
 	try:
-		return subprocess.run(arguments, capture_output=True, text=True, check=False, env=environment)
+		return subprocess.run(arguments, capture_output=True, text=True, check=False, env=environment, timeout=seconds)
 	except FileNotFoundError:
 		return subprocess.CompletedProcess(arguments, 127, "", "")
+	except subprocess.TimeoutExpired:
+		return subprocess.CompletedProcess(arguments, EXIT_TIMED_OUT, "", "")
 
 
 def plural(count, word):

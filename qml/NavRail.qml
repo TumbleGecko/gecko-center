@@ -69,6 +69,7 @@ Rectangle {
 						{ heading: "System" },
 						{ page: "performance", name: "Performance", glyph: "↗" },
 						{ page: "snapshots", name: "Snapshots", glyph: "⟲" },
+						{ page: "hardware", name: "Hardware", glyph: "▦" },
 						{ page: "drivers", name: "Drivers", glyph: "▣" },
 						{ page: "storage", name: "Storage", glyph: "⛃" },
 						{ page: "services", name: "Services", glyph: "⚑" },

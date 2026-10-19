@@ -1,4 +1,4 @@
-"""What the system pages read and change, from health and snapshots to drivers, storage, services, news and the guide.
+"""What the system pages read and change, from health, hardware and snapshots to drivers, storage, services and news.
 
 Reading runs beside the window so it stays smooth, changes run as jobs through the main bridge with their progress.
 """
@@ -9,7 +9,8 @@ import threading
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
-from . import drivers, guide, health, news, operations, performance, report, services, snapshots, sources, storage
+from . import (drivers, guide, hardware, health, news, operations, performance, report, services, snapshots, sources,
+	storage)
 from .commands import Command, run_as_root
 
 EXIT_SUCCESS = 0
@@ -23,6 +24,7 @@ COLLECTORS = {
 	"source-packages": lambda: {"packages": sources.installed_by_source()},
 	"report": report.share,
 	"drivers": drivers.collect,
+	"hardware": hardware.collect,
 	"storage": storage.collect,
 	"services": services.collect,
 }

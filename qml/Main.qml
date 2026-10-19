@@ -258,7 +258,8 @@ ApplicationWindow {
 
 			readonly property var pages: ({
 				"overview": overviewPage, "performance": performancePage, "explore": explorePage,
-				"installed": installedPage, "updates": updatesPage, "snapshots": snapshotsPage, "sources": sourcesPage, "drivers": driversPage, "storage": storagePage,
+				"installed": installedPage, "updates": updatesPage, "snapshots": snapshotsPage, "sources": sourcesPage,
+				"hardware": hardwarePage, "drivers": driversPage, "storage": storagePage,
 				"services": servicesPage, "guide": guidePage, "news": newsPage, "settings": settingsPage
 			})
 			Layout.fillWidth: true
@@ -266,7 +267,7 @@ ApplicationWindow {
 			sourceComponent: {
 				if (window.detail)
 					return window.detail.guide ? guideTopicPage : window.detail.snapshot ? snapshotPage
-						: window.detail.sourceAlias ? sourcePage : detailPage
+						: window.detail.sourceAlias ? sourcePage : window.detail.device ? devicePage : detailPage
 				return content.pages[window.page] || content.pages.overview
 			}
 
@@ -296,6 +297,7 @@ ApplicationWindow {
 	Component { id: performancePage; PerformancePage {} }
 	Component { id: snapshotsPage; SnapshotsPage {} }
 	Component { id: sourcesPage; SourcesPage {} }
+	Component { id: hardwarePage; HardwarePage {} }
 	Component { id: driversPage; DriversPage {} }
 	Component { id: storagePage; StoragePage {} }
 	Component { id: servicesPage; ServicesPage {} }
@@ -306,4 +308,5 @@ ApplicationWindow {
 	Component { id: guideTopicPage; GuideTopicPage { topicId: window.detail.guide } }
 	Component { id: snapshotPage; SnapshotPage { number: window.detail.snapshot } }
 	Component { id: sourcePage; SourcePage { sourceAlias: window.detail.sourceAlias } }
+	Component { id: devicePage; DevicePage { deviceKey: window.detail.device } }
 }

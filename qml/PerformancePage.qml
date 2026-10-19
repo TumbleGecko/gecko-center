@@ -193,20 +193,40 @@ GeckoPage {
 				label: "Disk and network"
 				value: ""
 
-				Repeater {
-					model: page.report ? [
-						"Disk  ·  " + page.speed(page.report.diskRead) + " read  ·  " + page.speed(page.report.diskWrite)
-							+ " written",
-						"Network  ·  " + page.speed(page.report.received) + " in  ·  " + page.speed(page.report.sent)
-							+ " out"
-					] : []
+				// Each measure on its own row with its speed at the right edge, so the numbers line up and never wrap
+				GridLayout {
+					Layout.fillWidth: true
+					columns: 2
+					columnSpacing: 12
+					rowSpacing: 4
 
-					delegate: Text {
-						required property string modelData
-						Layout.fillWidth: true
-						text: modelData
-						color: Theme.text
-						elide: Text.ElideRight
+					Repeater {
+						model: ["Disk read", "Disk written", "Network in", "Network out"]
+
+						delegate: Text {
+							required property string modelData
+							required property int index
+							Layout.row: index
+							Layout.column: 0
+							text: modelData
+							color: Theme.muted
+						}
+					}
+
+					Repeater {
+						model: page.report ? [page.report.diskRead, page.report.diskWrite, page.report.received,
+							page.report.sent] : []
+
+						delegate: Text {
+							required property real modelData
+							required property int index
+							Layout.row: index
+							Layout.column: 1
+							Layout.fillWidth: true
+							horizontalAlignment: Text.AlignRight
+							text: page.speed(modelData)
+							color: Theme.text
+						}
 					}
 				}
 			}

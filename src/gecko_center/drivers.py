@@ -27,12 +27,12 @@ DRIVERS = {
 }
 
 
-def _without_code(text):
+def without_code(text):
 	"""lspci adds the numeric id in brackets after each name."""
 	return re.sub(r"\s*\[[0-9a-f]{4}\]$", "", text).strip()
 
 
-def _product_name(text):
+def product_name(text):
 	"""lspci names a card as 'AD102 [GeForce RTX 4090]', the bracket holds the name people know and the chip goes after it."""
 	named = re.fullmatch(r"(.*?)\s*\[([^\[\]]+)\]", text)
 	return f"{named.group(2)} ({named.group(1)})" if named and named.group(1) else text
@@ -47,21 +47,30 @@ def nvidia_version():
 		return ""
 
 
-def graphics_cards():
-	listing = look.run(["lspci", "-vmm", "-k", "-nn"])
-	cards = []
+def pci_devices():
+	"""Each PCI device as lspci names its fields, with its full address in Slot and its driver in Driver."""
+	listing = look.run(["lspci", "-vmm", "-k", "-nn", "-D"])
+	devices = []
 	for record in listing.stdout.split("\n\n"):
 		fields = {}
 		for line in record.splitlines():
 			key, _, value = line.partition(":\t")
 			fields.setdefault(key, value)
+		if fields.get("Slot"):
+			devices.append(fields)
+	return devices
+
+
+def graphics_cards():
+	cards = []
+	for fields in pci_devices():
 		if not DISPLAY_CLASS.search(fields.get("Class", "")):
 			continue
 		vendor = re.search(r"\[([0-9a-f]{4})\]$", fields.get("Vendor", ""))
 		driver = fields.get("Driver", "")
 		cards.append({
-			"name": _product_name(_without_code(fields.get("Device", ""))),
-			"maker": _without_code(fields.get("Vendor", "")),
+			"name": product_name(without_code(fields.get("Device", ""))),
+			"maker": without_code(fields.get("Vendor", "")),
 			"vendor": vendor.group(1) if vendor else "",
 			"driver": driver,
 			"about": DRIVERS.get(driver, "No driver is in use." if not driver else ""),

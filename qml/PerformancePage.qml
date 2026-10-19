@@ -192,7 +192,7 @@ GeckoPage {
 				Text {
 					Layout.fillWidth: true
 					visible: !!page.report && page.report.swapUsed > 0
-					text: page.report ? Theme.size(page.report.swapUsed) + " moved to the disk" : ""
+					text: page.report ? Theme.size(page.report.swapUsed) + " moved to swap on a disk" : ""
 					color: Theme.muted
 					elide: Text.ElideRight
 				}

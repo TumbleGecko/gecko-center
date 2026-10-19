@@ -4,7 +4,7 @@ import re
 import shutil
 from pathlib import Path
 
-from . import look, operations, paths
+from . import disks, look, operations, paths
 
 PACKAGE_CACHE = Path("/var/cache/zypp/packages")
 # Logs older than this are rarely read, a month still covers the last few updates
@@ -67,4 +67,4 @@ def collect():
 	cleanups = [{"id": cleanup_id, "title": title, "about": about, "bytes": measure()}
 		for cleanup_id, (title, about, measure, _steps) in CLEANUPS.items()]
 	cleanups = [cleanup for cleanup in cleanups if cleanup["bytes"] is None or cleanup["bytes"] > 0]
-	return {"places": places(), "cleanups": cleanups}
+	return {"places": places(), "cleanups": cleanups, "swap": disks.swap_summary()}

@@ -48,7 +48,7 @@ guide.drivers.action=Open Drivers
 
 guide.storage.title=Files and disk space
 guide.storage.summary=Where your things are, and how to make room.
-guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old logs.\nFilelight draws what takes up the space in your own folders.
+guide.storage.body=Everything you own is in your home folder, which Dolphin opens first. Documents, Downloads, Pictures and the rest live there.\nFiles and folders whose names start with a dot are hidden settings. Press Ctrl and H in Dolphin to show or hide them.\nThe rest of the disk belongs to the system, and you never need to change anything there by hand.\nSwap is room on a disk that Linux uses as extra memory when memory fills up. Storage shows how much there is and whether it suits this computer.\nWhen space runs low, Storage shows leftovers that can go without losing anything, such as downloaded packages and old logs.\nFilelight draws what takes up the space in your own folders.
 guide.storage.page=storage
 guide.storage.action=Open Storage
 

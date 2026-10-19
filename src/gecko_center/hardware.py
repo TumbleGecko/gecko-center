@@ -8,7 +8,7 @@ import math
 import re
 from pathlib import Path
 
-from . import drivers, look, performance
+from . import disks, drivers, look, performance
 from . import sensors as sensors_module
 
 SYS = Path("/sys")
@@ -81,7 +81,7 @@ def _resolved(path):
 		return ""
 
 
-def _device(key, group, name, kind, summary, facts, short="", detail=""):
+def _device(key, group, name, kind, summary, facts, short="", detail="", uses=()):
 	"""One entry of the page, its facts kept in order and the empty ones left out.
 
 	A Temperature fact arrives as degrees, so the page gets the number to judge and the words to show.
@@ -90,15 +90,7 @@ def _device(key, group, name, kind, summary, facts, short="", detail=""):
 	facts = [(label, _celsius(value) if label == TEMPERATURE else value) for label, value in facts]
 	return {"key": key, "group": group, "name": name, "short": short or name, "kind": kind, "summary": summary,
 		"detail": detail, "degrees": degrees, "hot": degrees is not None and degrees >= HOT.get(group, DEFAULT_HOT),
-		"facts": [[label, value] for label, value in facts if value]}
-
-
-def _bytes_text(count):
-	"""Disk makers count in thousands, so a 2 TB disk reads 2 TB here too."""
-	for unit, size in (("TB", 10 ** 12), ("GB", 10 ** 9), ("MB", 10 ** 6)):
-		if count >= size:
-			return f"{count / size:.1f} {unit}".replace(".0 ", " ")
-	return f"{count} bytes"
+		"facts": [[label, value] for label, value in facts if value], "uses": list(uses)}
 
 
 def _maker(text):
@@ -375,21 +367,24 @@ def _disks(sensors):
 		blocks = json.loads(listing.stdout).get("blockdevices", [])
 	except ValueError:
 		return []
-	disks = []
+	found = []
+	uses = disks.disk_uses()
 	for block in blocks:
 		if block.get("type") != "disk" or not block.get("size"):
 			continue
 		connection = (block.get("tran") or "").upper()
 		connection = CONNECTIONS.get(connection, connection)
 		kind = "Hard disk" if block.get("rota") else DISK_KINDS.get(connection, f"{connection} SSD".strip())
-		size = _bytes_text(int(block["size"]))
+		size = disks.size_text(int(block["size"]))
+		holds = uses.get(block["name"], [])
 		device_path = _resolved(SYS / "block" / block["name"] / "device")
-		disks.append(_device(f"disk:{block['name']}", "Storage", (block.get("model") or block["name"]).strip(), kind,
+		found.append(_device(f"disk:{block['name']}", "Storage", (block.get("model") or block["name"]).strip(), kind,
 			f"{size} {kind}", [("Size", size), ("Kind", kind), ("Connection", connection),
 				("Firmware version", (block.get("rev") or "").strip()),
 				(TEMPERATURE, sensors_module.device_degrees(sensors, device_path)),
-				("Name in the system", "/dev/" + block["name"])]))
-	return disks
+				("Name in the system", "/dev/" + block["name"])],
+			detail=disks.use_line(holds[0]) if holds else "", uses=holds))
+	return found
 
 
 def _batteries():

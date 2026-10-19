@@ -82,7 +82,7 @@ GeckoPage {
 					id: day
 					Layout.leftMargin: 20
 					Layout.preferredWidth: 84
-					Layout.alignment: Qt.AlignTop
+					Layout.alignment: Qt.AlignVCenter
 					spacing: 0
 
 					Text {

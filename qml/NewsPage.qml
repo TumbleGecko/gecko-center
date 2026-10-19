@@ -67,7 +67,7 @@ GeckoPage {
 				Text {
 					Layout.leftMargin: 20
 					Layout.preferredWidth: 84
-					Layout.alignment: Qt.AlignTop
+					Layout.alignment: Qt.AlignVCenter
 					text: Qt.formatDateTime(new Date(story.modelData.date), "d MMM")
 					color: Theme.muted
 					wrapMode: Text.WordWrap

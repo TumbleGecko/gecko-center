@@ -16,6 +16,10 @@ from .commands import Command, run_as_root
 EXIT_SUCCESS = 0
 # How often the performance page looks again, in milliseconds
 PERFORMANCE_INTERVAL = 1000
+# udev announces a plugged in or out USB device as one line, which the hardware pages follow while they show
+USB_MONITOR_ARGUMENTS = ["udevadm", "monitor", "--udev", "--subsystem-match=usb/usb_device"]
+# A device arriving brings a few lines at once, so the pages read again once they have stopped, in milliseconds
+USB_SETTLE = 700
 
 # Each look that needs no root, run on a thread of its own
 COLLECTORS = {
@@ -69,6 +73,12 @@ class Center(QObject):
 		self._performance_timer.setInterval(PERFORMANCE_INTERVAL)
 		self._performance_timer.timeout.connect(lambda: self.read("performance"))
 		self._pmon = None
+		self._usb_monitor = None
+		self._usb_watchers = 0
+		self._usb_settle = QTimer(self)
+		self._usb_settle.setSingleShot(True)
+		self._usb_settle.setInterval(USB_SETTLE)
+		self._usb_settle.timeout.connect(self._usb_changed)
 
 	def _store(self, kind, value):
 		self._reading.discard(kind)
@@ -137,14 +147,50 @@ class Center(QObject):
 			return
 		self._reading.add("hardware-history")
 		self.readingChanged.emit()
+		self._read_history_as_root()
+
+	def _read_history_as_root(self):
 		shown = self._info.get("hardware-history") or {"readable": False, "events": []}
-		command = run_as_root(self._root, hardware_history.arguments(), self)
-		command.finished.connect(lambda code, text: self._store("hardware-history", shown if code != EXIT_SUCCESS
-			else {"readable": True, "events": hardware_history.events_from_json(text)}))
+
+		def take(code, text):
+			if code != EXIT_SUCCESS:
+				self._store("hardware-history", shown)
+				return
+			self._store("hardware-history", {"readable": True, "throughRoot": True, "checked": hardware_history.now(),
+				"events": hardware_history.events_from_json(text)})
+		run_as_root(self._root, hardware_history.arguments(), self).finished.connect(take)
 
 	@Slot(result=bool)
 	def journalNeedsPassword(self):
 		return self._root.needsPassword()
+
+	def _read_quietly(self, kind):
+		"""Reads again without the busy spinner, for a page that follows changes while it shows."""
+		threading.Thread(target=lambda: self._collected.emit(kind, COLLECTORS[kind]()), daemon=True).start()
+
+	@Slot(bool)
+	def watchHardware(self, watching):
+		"""The hardware pages follow USB devices coming and going, each page that shows adds one watcher."""
+		self._usb_watchers = max(0, self._usb_watchers + (1 if watching else -1))
+		if self._usb_watchers and self._usb_monitor is None:
+			self._usb_monitor = Command(USB_MONITOR_ARGUMENTS, parent=self, keep_output=False)
+			self._usb_monitor.line.connect(self._usb_line)
+			self._usb_monitor.finished.connect(lambda _code, _output: setattr(self, "_usb_monitor", None))
+		elif not self._usb_watchers and self._usb_monitor is not None:
+			self._usb_monitor.stop()
+			self._usb_monitor = None
+
+	def _usb_line(self, text):
+		if " add " in text or " remove " in text:
+			self._usb_settle.start()
+
+	def _usb_changed(self):
+		self._read_quietly("hardware")
+		# A history read with the password is read the same way again, else it would fall back to unreadable
+		if (self._info.get("hardware-history") or {}).get("throughRoot"):
+			self._read_history_as_root()
+		else:
+			self._read_quietly("hardware-history")
 
 	@Slot(bool)
 	def watchPerformance(self, watching):

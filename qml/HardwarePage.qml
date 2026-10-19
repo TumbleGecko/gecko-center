@@ -47,7 +47,10 @@ GeckoPage {
 	Component.onCompleted: {
 		center.read("hardware")
 		center.read("hardware-history")
+		center.watchHardware(true)
 	}
+	// Plugging something in or out reads the page again quietly while it shows
+	Component.onDestruction: center.watchHardware(false)
 
 	readonly property var history: center.info["hardware-history"] || null
 
@@ -111,7 +114,8 @@ GeckoPage {
 						spacing: 4
 
 						Text {
-							text: "Plugged in and out"
+							text: "Plugged in and out" + (page.history && page.history.checked
+								? "  ·  checked " + Qt.formatDateTime(new Date(page.history.checked), "d MMM hh:mm") : "")
 							color: Theme.muted
 						}
 

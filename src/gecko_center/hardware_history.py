@@ -90,8 +90,12 @@ def _finished(event):
 		"day": moment.strftime("%Y-%m-%d"), "time": moment.strftime("%H:%M"), "when": moment.isoformat(timespec="seconds")}
 
 
+def now():
+	return datetime.now().isoformat(timespec="seconds")
+
+
 def collect():
 	"""Read as you, which shows the kernel's lines once you may read the system journal."""
 	if not journal.reads_system_journal():
-		return {"readable": False, "events": []}
-	return {"readable": True, "events": events_from_json(look.run(arguments()).stdout)}
+		return {"readable": False, "events": [], "checked": now()}
+	return {"readable": True, "events": events_from_json(look.run(arguments()).stdout), "checked": now()}

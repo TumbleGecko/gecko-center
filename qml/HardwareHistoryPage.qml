@@ -13,12 +13,19 @@ GeckoPage {
 	})) : []
 
 	title: "Plugged in and out"
-	subtitle: "USB devices from the last three months, newest first."
+	subtitle: Theme.lines("USB devices from the last three months, newest first. It updates as soon as something is "
+		+ "plugged in or out" + (history && history.checked ? ", last checked "
+			+ Qt.formatDateTime(new Date(history.checked), "hh:mm:ss") : "") + ".")
 	scroller: list
 	busy: center.reading.includes("hardware-history")
 	empty: !history
 
-	Component.onCompleted: if (!history) center.read("hardware-history")
+	Component.onCompleted: {
+		if (!history)
+			center.read("hardware-history")
+		center.watchHardware(true)
+	}
+	Component.onDestruction: center.watchHardware(false)
 
 	actions: [
 		GeckoButton {

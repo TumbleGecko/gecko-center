@@ -44,9 +44,15 @@ BTRFS_ONLY = ("btrfs-scrub.timer", "btrfs-balance.timer", "snapper-cleanup.timer
 ZYPPER_EXIT_REBOOT_NEEDED = 102
 
 
+# The page that shows each check in full, so a check that is fine still opens somewhere
+CHECK_PAGES = {"updates": "updates", "restart": "updates", "disk": "storage", "snapshots": "snapshots",
+	"services": "services", "sources": "sources", "graphics": "drivers", "maintenance": "services",
+	"firewall": "services"}
+
+
 def _check(check_id, title, state, summary, details=None, action=""):
 	return {"id": check_id, "title": title, "state": state, "summary": summary, "details": details or [],
-		"action": action}
+		"action": action, "page": CHECK_PAGES.get(check_id, "")}
 
 
 def _os_release():

@@ -44,17 +44,74 @@ GeckoPage {
 		anchors.fill: parent
 		model: page.stories
 
-		delegate: StatusCard {
+		// Each story as a card, the whole card opens it in the browser, which the arrow pointing out says
+		delegate: AbstractButton {
+			id: story
 			required property var modelData
 			width: list.cardWidth
-			status: modelData.tumbleweed ? "note" : ""
-			label: modelData.date + (modelData.tumbleweed ? "  ·  Tumbleweed" : "")
-			heading: modelData.title
-			details: modelData.summary
-			actionText: "Read"
-			actionPrimary: false
-			actionEnabled: true
-			onActed: Qt.openUrlExternally(modelData.link)
+			implicitHeight: storyLines.implicitHeight + 36
+			hoverEnabled: true
+			Accessible.name: modelData.title
+			onClicked: Qt.openUrlExternally(modelData.link)
+
+			background: Rectangle {
+				radius: 16
+				color: story.down ? "#101712" : story.hovered ? "#172219" : Theme.rail
+				border.color: story.hovered ? "#355040" : Theme.line
+				Behavior on color { ColorAnimation { duration: Theme.quick } }
+			}
+
+			contentItem: RowLayout {
+				spacing: 20
+
+				Text {
+					Layout.leftMargin: 20
+					Layout.preferredWidth: 84
+					Layout.alignment: Qt.AlignTop
+					text: Qt.formatDateTime(new Date(story.modelData.date), "d MMM")
+					color: Theme.muted
+					wrapMode: Text.WordWrap
+				}
+
+				ColumnLayout {
+					id: storyLines
+					Layout.fillWidth: true
+					spacing: 6
+
+					Text {
+						visible: story.modelData.tumbleweed
+						text: "Tumbleweed"
+						color: Theme.accentHover
+						font.pixelSize: Theme.smallSize
+						font.weight: Font.DemiBold
+					}
+
+					Text {
+						Layout.fillWidth: true
+						text: story.modelData.title
+						color: Theme.textStrong
+						font.pixelSize: 19
+						font.weight: Font.DemiBold
+						wrapMode: Text.WordWrap
+					}
+
+					Text {
+						Layout.fillWidth: true
+						text: story.modelData.summary
+						color: Theme.muted
+						wrapMode: Text.WordWrap
+						maximumLineCount: 3
+						elide: Text.ElideRight
+					}
+				}
+
+				MoreMark {
+					Layout.rightMargin: 18
+					text: "↗"
+					font.pixelSize: 22
+					lit: story.hovered
+				}
+			}
 		}
 	}
 }

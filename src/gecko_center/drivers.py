@@ -98,6 +98,38 @@ def _plain(text):
 	return html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text or ""))).strip()
 
 
+# fwupd lists each Secure Boot certificate as a device, they are not firmware a person updates
+CERTIFICATE_PLUGINS = ("uefi_kek", "uefi_pk", "uefi_db", "uefi_dbx")
+# How firmware that fwupd cannot update gets its updates, by the fwupd plugin that found it
+UPDATED_BY = {"cpu": "With system updates", "pci_psp": "With the motherboard firmware",
+	"tpm": "With the motherboard firmware"}
+
+
+def fwupd_devices():
+	"""Every device fwupd knows, with its firmware version, read without root."""
+	listing = look.run(["fwupdmgr", "get-devices", "--json"])
+	start = listing.stdout.find("{")
+	try:
+		return json.loads(listing.stdout[start:]).get("Devices", []) if start >= 0 else []
+	except ValueError:
+		return []
+
+
+def all_firmware(updates):
+	"""Each device's firmware with its version, and the newer one when fwupd has it, updates first."""
+	newer = {device["id"]: device for device in updates["devices"]}
+	found = []
+	for item in fwupd_devices():
+		if not item.get("Name") or item.get("Plugin") in CERTIFICATE_PLUGINS:
+			continue
+		update = newer.get(item.get("DeviceId", ""))
+		found.append({"id": item.get("DeviceId", ""), "name": item["Name"], "vendor": item.get("Vendor", ""),
+			"current": item.get("Version", ""), "update": update,
+			"updatable": "updatable" in (item.get("Flags") or []),
+			"updatedBy": UPDATED_BY.get(item.get("Plugin", ""), "Not through Linux")})
+	return sorted(found, key=lambda device: device["update"] is None)
+
+
 def firmware_updates():
 	"""Each device fwupd has newer firmware for, from the list it downloaded last from the LVFS, read without root."""
 	listing = look.run(["fwupdmgr", "get-updates", "--json"])
@@ -135,4 +167,5 @@ def firmware_steps(device_id):
 
 
 def collect():
-	return {"cards": graphics_cards(), "firmware": firmware_updates()}
+	updates = firmware_updates()
+	return {"cards": graphics_cards(), "firmware": updates, "allFirmware": all_firmware(updates)}

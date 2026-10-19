@@ -47,8 +47,8 @@ GeckoPage {
 
 						Text {
 							Layout.fillWidth: true
-							text: place.modelData.label + "  ·  " + Theme.size(place.modelData.free)
-								+ " free of " + Theme.size(place.modelData.total)
+							text: place.modelData.label + "  ·  " + place.modelData.freeText
+								+ " free of " + place.modelData.totalText
 							color: Theme.textStrong
 							font.pixelSize: 19
 							font.weight: Font.DemiBold
@@ -130,15 +130,59 @@ GeckoPage {
 			Layout.fillHeight: true
 			model: page.report ? page.report.cleanups : []
 
-			delegate: StatusCard {
+			// How much each leftover frees comes first, it is what decides whether removing it is worth it
+			delegate: Rectangle {
+				id: leftover
 				required property var modelData
 				width: list.cardWidth
-				label: modelData.bytes > 0 ? Theme.size(modelData.bytes) : ""
-				heading: modelData.title
-				details: modelData.about
-				actionText: "Remove"
-				onActed: window.runSystem("storage", "clean", modelData.id, "Removing " + modelData.title.toLowerCase(),
-					"Remove")
+				implicitHeight: leftoverLines.implicitHeight + 32
+				radius: 14
+				color: Theme.rail
+				border.color: Theme.line
+
+				RowLayout {
+					id: leftoverLines
+					anchors.left: parent.left
+					anchors.right: parent.right
+					anchors.verticalCenter: parent.verticalCenter
+					anchors.leftMargin: 20
+					anchors.rightMargin: 16
+					spacing: 20
+
+					Text {
+						Layout.preferredWidth: 100
+						text: leftover.modelData.bytes > 0 ? Theme.size(leftover.modelData.bytes) : "–"
+						color: Theme.textStrong
+						font.pixelSize: 20
+						font.weight: Font.DemiBold
+					}
+
+					ColumnLayout {
+						Layout.fillWidth: true
+						spacing: 2
+
+						Text {
+							Layout.fillWidth: true
+							text: leftover.modelData.title
+							color: Theme.textStrong
+							elide: Text.ElideRight
+						}
+
+						Text {
+							Layout.fillWidth: true
+							text: leftover.modelData.about
+							color: Theme.muted
+							wrapMode: Text.WordWrap
+						}
+					}
+
+					GeckoButton {
+						text: "Remove"
+						enabled: !bridge.busy
+						onClicked: window.runSystem("storage", "clean", leftover.modelData.id,
+							"Removing " + leftover.modelData.title.toLowerCase(), "Remove")
+					}
+				}
 			}
 		}
 	}

@@ -21,6 +21,11 @@ GeckoPage {
 			window.runSystem("health", "firewall-on", "", "Turning on the firewall", "Turn on")
 	}
 
+	// A warning or a problem waits for the person, a note or a good result does not
+	function needsLook(check) {
+		return check.state === "warning" || check.state === "problem"
+	}
+
 	function actionText(action) {
 		return ({ "page:updates": "Show updates", "page:storage": "Make room", "page:snapshots": "Show snapshots",
 			"page:services": "Show services", "page:sources": "Show sources", "page:drivers": "Show drivers",
@@ -28,7 +33,7 @@ GeckoPage {
 	}
 
 	title: "Overview"
-	scroller: list
+	scroller: scroll
 	guideTopic: "tumbleweed"
 	busy: center.reading.includes("health")
 	empty: checks.length === 0
@@ -70,76 +75,185 @@ GeckoPage {
 		Item { Layout.fillWidth: true }
 	]
 
-	ColumnLayout {
+	Flickable {
+		id: scroll
 		anchors.fill: parent
-		spacing: 16
+		clip: true
+		contentHeight: column.implicitHeight
+		boundsBehavior: Flickable.StopAtBounds
+		ScrollBar.vertical: GeckoScrollBar {}
 
-		Rectangle {
-			id: machineCard
-			visible: !!page.machine
-			Layout.fillWidth: true
-			Layout.rightMargin: 16
-			implicitHeight: facts.implicitHeight + 40
-			radius: 16
-			color: "#142019"
-			border.color: Theme.lineStrong
+		FastWheel { flickable: scroll }
 
+		ColumnLayout {
+			id: column
+			width: scroll.width - 16
+			spacing: 12
+
+			// The machine in a few words, opening Hardware for the rest
+			AbstractButton {
+				id: machineCard
+				visible: !!page.machine
+				Layout.fillWidth: true
+				implicitHeight: facts.implicitHeight + 40
+				hoverEnabled: true
+				Accessible.name: "This computer"
+				onClicked: window.showPage("hardware")
+
+				background: Rectangle {
+					radius: 16
+					color: machineCard.down ? "#101712" : machineCard.hovered ? "#1a281f" : "#142019"
+					border.color: machineCard.hovered ? "#355040" : Theme.lineStrong
+					Behavior on color { ColorAnimation { duration: Theme.quick } }
+				}
+
+				GridLayout {
+					id: facts
+					anchors.left: parent.left
+					anchors.right: parent.right
+					anchors.top: parent.top
+					anchors.margins: 20
+					anchors.rightMargin: 52
+					columns: 2
+					columnSpacing: 32
+					rowSpacing: 10
+
+					Repeater {
+						model: page.machine ? [
+							["System", page.machine.system + (page.machine.snapshot ? "  " + page.machine.snapshot : "")],
+							["Linux", page.machine.kernel],
+							["Desktop", page.machine.desktop || "Unknown"],
+							["Processor", page.machine.processor],
+							["Graphics", page.machine.graphics || "Unknown"],
+							["Memory", page.machine.memory]
+						] : []
+
+						delegate: RowLayout {
+							required property var modelData
+							Layout.fillWidth: true
+							Layout.preferredWidth: 1
+							spacing: 12
+
+							Text {
+								Layout.preferredWidth: 96
+								text: modelData[0]
+								color: Theme.muted
+							}
+
+							Text {
+								Layout.fillWidth: true
+								text: modelData[1]
+								color: Theme.textStrong
+								elide: Text.ElideRight
+							}
+						}
+					}
+				}
+
+				MoreMark {
+					anchors.right: parent.right
+					anchors.rightMargin: 20
+					anchors.verticalCenter: parent.verticalCenter
+					lit: machineCard.hovered
+				}
+			}
+
+			// What needs you comes first, large and with the button that deals with it
+			Repeater {
+				model: page.checks.filter(check => page.needsLook(check))
+
+				delegate: StatusCard {
+					required property var modelData
+					Layout.fillWidth: true
+					status: modelData.state
+					label: modelData.title
+					heading: modelData.summary
+					details: modelData.details.join("\n")
+					actionText: page.actionText(modelData.action)
+					onActed: page.act(modelData.action)
+				}
+			}
+
+			Text {
+				visible: page.checks.some(check => !page.needsLook(check))
+				Layout.topMargin: 12
+				text: page.attention === 0 ? "Everything checked" : "The rest is fine"
+				color: Theme.muted
+				font.weight: Font.DemiBold
+			}
+
+			// Everything that is fine as small tiles, each opening the page that shows it in full
 			GridLayout {
-				id: facts
-				anchors.fill: parent
-				anchors.margins: 20
-				columns: 2
-				columnSpacing: 32
-				rowSpacing: 10
+				Layout.fillWidth: true
+				columns: width >= 1000 ? 3 : 2
+				columnSpacing: 12
+				rowSpacing: 12
 
 				Repeater {
-					model: page.machine ? [
-						["System", page.machine.system + (page.machine.snapshot ? "  " + page.machine.snapshot : "")],
-						["Linux", page.machine.kernel],
-						["Desktop", page.machine.desktop || "Unknown"],
-						["Processor", page.machine.processor],
-						["Graphics", page.machine.graphics || "Unknown"],
-						["Memory", page.machine.memory]
-					] : []
+					model: page.checks.filter(check => !page.needsLook(check))
 
-					delegate: RowLayout {
+					delegate: AbstractButton {
+						id: tile
 						required property var modelData
 						Layout.fillWidth: true
-						spacing: 12
+						Layout.fillHeight: true
+						Layout.preferredWidth: 1
+						implicitHeight: tileLines.implicitHeight + 36
+						hoverEnabled: true
+						enabled: modelData.page !== ""
+						Accessible.name: modelData.title + ", " + modelData.summary
+						onClicked: window.showPage(modelData.page)
 
-						Text {
-							Layout.preferredWidth: 96
-							text: modelData[0]
-							color: Theme.muted
+						background: Rectangle {
+							radius: 14
+							color: tile.down ? "#101712" : tile.hovered ? "#172219" : Theme.rail
+							border.color: tile.hovered ? "#355040" : Theme.line
+							Behavior on color { ColorAnimation { duration: Theme.quick } }
 						}
 
-						Text {
-							Layout.fillWidth: true
-							text: modelData[1]
-							color: Theme.textStrong
-							elide: Text.ElideRight
+						contentItem: RowLayout {
+							spacing: 14
+
+							Text {
+								Layout.leftMargin: 18
+								Layout.alignment: Qt.AlignVCenter
+								text: tile.modelData.state === "good" ? "✓" : "i"
+								color: tile.modelData.state === "good" ? Theme.accent : Theme.muted
+								font.pixelSize: 20
+								font.weight: Font.DemiBold
+							}
+
+							ColumnLayout {
+								id: tileLines
+								Layout.fillWidth: true
+								spacing: 2
+
+								Text {
+									Layout.fillWidth: true
+									text: tile.modelData.title
+									color: Theme.muted
+									elide: Text.ElideRight
+								}
+
+								Text {
+									Layout.fillWidth: true
+									text: tile.modelData.summary
+									color: Theme.textStrong
+									wrapMode: Text.WordWrap
+								}
+							}
+
+							MoreMark {
+								visible: tile.enabled
+								Layout.rightMargin: 16
+								lit: tile.hovered
+							}
 						}
 					}
 				}
 			}
-		}
 
-		CardList {
-			id: list
-			Layout.fillWidth: true
-			Layout.fillHeight: true
-			model: page.checks
-
-			delegate: StatusCard {
-				required property var modelData
-				width: list.cardWidth
-				status: modelData.state
-				label: modelData.title
-				heading: modelData.summary
-				details: modelData.details.join("\n")
-				actionText: page.actionText(modelData.action)
-				onActed: page.act(modelData.action)
-			}
+			Item { Layout.preferredHeight: 8 }
 		}
 	}
 }

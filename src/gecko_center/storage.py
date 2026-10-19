@@ -33,8 +33,10 @@ def places():
 	found = [("System", Path("/"))]
 	if _device(Path.home()) != _device("/"):
 		found.append(("Home", Path.home()))
-	return [{"label": label, "free": shutil.disk_usage(place).free, "total": shutil.disk_usage(place).total}
-		for label, place in found]
+	# Sizes read the way Hardware and the disk makers write them, so a 2 TB disk says 2 TB on both pages
+	usage = [(label, shutil.disk_usage(place)) for label, place in found]
+	return [{"label": label, "free": used.free, "total": used.total, "freeText": disks.size_text(used.free),
+		"totalText": disks.size_text(used.total)} for label, used in usage]
 
 
 # Each cleanup with its plain words, its size in bytes or None when it cannot be measured, and its steps

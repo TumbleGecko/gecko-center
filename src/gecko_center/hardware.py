@@ -55,8 +55,6 @@ CONNECTIONS = {"NVME": "NVMe", "SATA": "SATA", "USB": "USB", "MMC": "SD card"}
 # A flash disk is named by its connection, these connections are named on their own
 DISK_KINDS = {"USB": "USB drive", "SD card": "SD card"}
 
-# fwupd lists each Secure Boot certificate as a device, they are kept together as one entry
-CERTIFICATE_PLUGINS = ("uefi_kek", "uefi_pk", "uefi_db", "uefi_dbx")
 
 TEMPERATURE = "Temperature"
 # Degrees at which a part counts as hot, from what makers give as the top of the normal range
@@ -407,15 +405,6 @@ def _batteries():
 # Firmware ======================================================================
 
 
-def _fwupd_devices():
-	listing = look.run(["fwupdmgr", "get-devices", "--json"])
-	start = listing.stdout.find("{")
-	try:
-		return json.loads(listing.stdout[start:]).get("Devices", []) if start >= 0 else []
-	except ValueError:
-		return []
-
-
 def _firmware(devices):
 	entries = []
 	certificates = []
@@ -423,7 +412,7 @@ def _firmware(devices):
 		name = item.get("Name")
 		if not name:
 			continue
-		if item.get("Plugin") in CERTIFICATE_PLUGINS:
+		if item.get("Plugin") in drivers.CERTIFICATE_PLUGINS:
 			certificates.append((name + (f" ({item['Vendor']})" if item.get("Vendor") not in (None, "Unknown")
 				else ""), item.get("Version") or "Present"))
 			continue
@@ -441,7 +430,7 @@ def _firmware(devices):
 
 def collect():
 	sensors = sensors_module.read_sensors()
-	firmware = _fwupd_devices()
+	firmware = drivers.fwupd_devices()
 	cards = drivers.graphics_cards()
 	found = (_computer(firmware) + _processor(sensors, firmware) + _memory(sensors) + _pci_parts(sensors, cards)
 		+ _displays() + _disks(sensors) + _usb_parts() + _batteries() + _firmware(firmware))

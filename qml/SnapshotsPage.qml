@@ -57,19 +57,87 @@ GeckoPage {
 			details: page.report ? page.report.problem : ""
 		}
 
-		delegate: StatusCard {
+		// A timeline, the day on the left, what changed in the middle and what can be done on the right
+		delegate: AbstractButton {
+			id: row
 			required property var modelData
+			readonly property bool current: modelData.running || modelData.next
 			width: list.cardWidth
-			status: modelData.running ? "good" : modelData.next ? "note" : ""
-			label: modelData.running || modelData.next ? "" : "#" + modelData.number
-			heading: modelData.title
-			details: modelData.about
-			actionText: modelData.running || modelData.next ? "" : "Roll back"
-			onActed: rollback.ask(modelData)
+			implicitHeight: Math.max(day.implicitHeight, words.implicitHeight) + 32
+			hoverEnabled: true
+			Accessible.name: modelData.title
+			onClicked: window.openDetail({ key: "snapshot-" + modelData.number, snapshot: modelData.number })
 
-			GeckoButton {
-				text: "More info"
-				onClicked: window.openDetail({ key: "snapshot-" + modelData.number, snapshot: modelData.number })
+			background: Rectangle {
+				radius: 14
+				color: row.down ? "#101712" : row.hovered ? "#172219" : row.current ? "#142019" : Theme.rail
+				border.color: row.current ? Theme.accent : row.hovered ? "#355040" : Theme.line
+				Behavior on color { ColorAnimation { duration: Theme.quick } }
+			}
+
+			contentItem: RowLayout {
+				spacing: 20
+
+				ColumnLayout {
+					id: day
+					Layout.leftMargin: 20
+					Layout.preferredWidth: 84
+					Layout.alignment: Qt.AlignTop
+					spacing: 0
+
+					Text {
+						text: Qt.formatDateTime(new Date(row.modelData.date.replace(" ", "T")), "d MMM")
+						color: Theme.textStrong
+						font.pixelSize: 19
+						font.weight: Font.DemiBold
+					}
+
+					Text {
+						text: Qt.formatDateTime(new Date(row.modelData.date.replace(" ", "T")), "hh:mm")
+						color: Theme.muted
+					}
+				}
+
+				ColumnLayout {
+					id: words
+					Layout.fillWidth: true
+					spacing: 2
+
+					Text {
+						Layout.fillWidth: true
+						text: row.modelData.title
+						color: Theme.textStrong
+						font.weight: Font.DemiBold
+						elide: Text.ElideRight
+					}
+
+					Text {
+						Layout.fillWidth: true
+						text: row.modelData.about
+						color: Theme.muted
+						wrapMode: Text.WordWrap
+						maximumLineCount: 2
+						elide: Text.ElideRight
+					}
+				}
+
+				Text {
+					visible: row.current
+					text: row.modelData.running ? "✓  Running now" : "Starts next time"
+					color: Theme.accentHover
+				}
+
+				GeckoButton {
+					visible: !row.current
+					text: "Roll back"
+					enabled: !bridge.busy
+					onClicked: rollback.ask(row.modelData)
+				}
+
+				MoreMark {
+					Layout.rightMargin: 18
+					lit: row.hovered
+				}
 			}
 		}
 	}

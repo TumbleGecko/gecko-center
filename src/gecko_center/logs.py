@@ -1,12 +1,14 @@
 """The errors in the journal for one start of the computer, grouped by kind and put in plain words.
 
-Without root the journal has only your own messages, with root it has the system's and the kernel's too.
+Without root or the systemd-journal group the journal has only your own messages, else the system's too.
 """
 
 import hashlib
 import json
+import os
 import re
 from datetime import datetime
+from pathlib import Path
 
 from . import look, performance
 
@@ -20,6 +22,8 @@ CRASH_MESSAGE_ID = "fc2e22bc6ee647b6b90729ab34a250b1"
 # Numbers, addresses and ids change between repeats of the same message
 CHANGING = re.compile(r"0x[0-9a-f]+|[0-9a-f]{8,}|\d+", re.IGNORECASE)
 KERNEL = "kernel"
+# The system journal lives on disk, or only in memory on a system that keeps no logs across starts
+JOURNAL_FOLDERS = (Path("/var/log/journal"), Path("/run/log/journal"))
 # The system's own parts by the name they log under, said the way a person would
 PART_NAMES = {"kernel": "Linux", "systemd": "System startup", "(sd-pam)": "Login", "sddm": "The login screen",
 	"sddm-helper": "The login screen", "kwin_wayland": "The desktop", "kwin_x11": "The desktop",
@@ -151,8 +155,13 @@ def problems_from_json(text):
 		problem["last"]), reverse=False)
 
 
+def reads_system_journal():
+	"""Whether journalctl run as you sees the system's messages too, which needs the system journal readable."""
+	return any(os.access(journal, os.R_OK) for folder in JOURNAL_FOLDERS for journal in folder.glob("*/system.journal"))
+
+
 def collect(boot=0):
-	"""Your own messages, read without root, the window reads everyone's through sudo when asked."""
+	"""What you may read without root, everyone's messages for a member of systemd-journal, else only yours."""
 	boots = boots_from_json(look.run(boots_arguments()).stdout)
-	return {"boot": boot, "everyone": False, "boots": boots,
+	return {"boot": boot, "everyone": reads_system_journal(), "boots": boots,
 		"problems": problems_from_json(look.run(problems_arguments(boot)).stdout)}

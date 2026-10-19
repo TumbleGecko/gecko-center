@@ -12,6 +12,7 @@ GeckoPage {
 		.find(item => item.key === deviceKey) || null
 
 	title: device ? device.name : ""
+	scroller: list
 	subtitle: !device ? "" : device.group === device.kind ? device.group
 		: device.group + "  ·  " + device.kind
 	busy: center.reading.includes("hardware")

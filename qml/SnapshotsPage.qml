@@ -21,6 +21,7 @@ GeckoPage {
 	}
 
 	title: "Snapshots"
+	scroller: list
 	guideTopic: "snapshots"
 	subtitle: "Roll back to how the system was before a change. Your own files stay as they are."
 	busy: center.reading.includes("snapshots")

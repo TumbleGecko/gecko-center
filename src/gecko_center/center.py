@@ -9,8 +9,8 @@ import threading
 from PySide6.QtCore import Property, QObject, QTimer, QUrl, Signal, Slot
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
-from . import (drivers, guide, hardware, health, news, operations, performance, report, services, snapshots, sources,
-	storage)
+from . import (drivers, guide, hardware, health, logs, news, operations, performance, report, services, snapshots,
+	sources, storage)
 from .commands import Command, run_as_root
 
 EXIT_SUCCESS = 0
@@ -25,6 +25,7 @@ COLLECTORS = {
 	"report": report.share,
 	"drivers": drivers.collect,
 	"hardware": hardware.collect,
+	"logs": logs.collect,
 	"storage": storage.collect,
 	"services": services.collect,
 }
@@ -98,6 +99,30 @@ class Center(QObject):
 			self._read_news()
 		elif kind == "guide":
 			self._store(kind, guide.read_guide())
+
+	@Slot(int, bool)
+	def readLogs(self, boot, everyone):
+		"""One start's problems, everyone's through sudo when asked, else only yours without a password."""
+		if "logs" in self._reading:
+			return
+		self._reading.add("logs")
+		self.readingChanged.emit()
+		if not everyone:
+			threading.Thread(target=lambda: self._collected.emit("logs", logs.collect(boot)), daemon=True).start()
+			return
+		shown = self._info.get("logs") or {"boot": boot, "everyone": False, "boots": [], "problems": []}
+
+		def take(code, text):
+			# A cancelled password keeps what the page showed rather than an empty list
+			if code != EXIT_SUCCESS:
+				self._store("logs", shown)
+				return
+			self._store("logs", dict(shown, boot=boot, everyone=True, problems=logs.problems_from_json(text)))
+		run_as_root(self._root, logs.problems_arguments(boot), self).finished.connect(take)
+
+	@Slot(result=bool)
+	def logsNeedPassword(self):
+		return self._root.needsPassword()
 
 	@Slot(bool)
 	def watchPerformance(self, watching):

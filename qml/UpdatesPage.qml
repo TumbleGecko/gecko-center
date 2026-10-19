@@ -122,6 +122,7 @@ GeckoPage {
 	}
 
 	title: "Updates"
+	scroller: list
 	guideTopic: "updates"
 	busy: bridge.checking || page.running
 	// While the update runs, only the update is on the page

@@ -36,6 +36,7 @@ GeckoPage {
 	}
 
 	title: "Drivers"
+	scroller: list
 	guideTopic: "drivers"
 	subtitle: "Graphics and firmware."
 	busy: center.reading.includes("drivers")

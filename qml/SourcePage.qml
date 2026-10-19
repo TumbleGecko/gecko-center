@@ -23,6 +23,7 @@ GeckoPage {
 	}
 
 	title: source ? source.name : ""
+	scroller: list
 	subtitle: source ? source.about : ""
 	busy: center.reading.includes("source-packages")
 	empty: !source

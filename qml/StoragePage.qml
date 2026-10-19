@@ -10,6 +10,7 @@ GeckoPage {
 	readonly property var report: center.info.storage || null
 
 	title: "Storage"
+	scroller: list
 	guideTopic: "storage"
 	subtitle: "Free space, and leftovers that can go."
 	busy: center.reading.includes("storage")

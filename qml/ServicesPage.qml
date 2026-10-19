@@ -35,6 +35,7 @@ GeckoPage {
 	}
 
 	title: "Services"
+	scroller: list
 	guideTopic: "services"
 	subtitle: report === null ? "" : failed.length === 0 ? "Every service runs as it should."
 		: failed.length === 1 ? "One stopped with an error." : failed.length + " stopped with an error."

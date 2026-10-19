@@ -20,6 +20,7 @@ GeckoPage {
 	}
 
 	title: "Sources"
+	scroller: list
 	guideTopic: "sources"
 	subtitle: "Where software is downloaded from."
 	busy: center.reading.includes("sources")

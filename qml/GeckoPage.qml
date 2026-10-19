@@ -23,6 +23,49 @@ Item {
 	readonly property bool actionsVisible: Array.from(footer.children)
 		.some(child => child.visible && child.implicitWidth > 0)
 
+	// The page's main list, kept at its place while its content refills and returned there by Back and Forward
+	property Flickable scroller: null
+	// The place below the list's top edge, and whether the list is still being brought back to it
+	property real keptY: 0
+	property bool holding: false
+
+	function hold(place) {
+		keptY = place
+		holding = true
+		settle()
+	}
+
+	// Moves the list to the kept place, and stops holding once the content reaches that far
+	function settle() {
+		if (!scroller || !holding)
+			return
+		const first = scroller.originY - scroller.topMargin
+		const last = scroller.originY + scroller.contentHeight - scroller.height + scroller.bottomMargin
+		scroller.contentY = Math.max(first, Math.min(Math.max(first, last), first + keptY))
+		if (last >= first + keptY)
+			Qt.callLater(() => frame.holding = false)
+	}
+
+	Connections {
+		target: frame.scroller
+		ignoreUnknownSignals: true
+
+		function onContentYChanged() {
+			if (!frame.holding)
+				frame.keptY = frame.scroller.contentY - frame.scroller.originY + frame.scroller.topMargin
+		}
+
+		function onContentHeightChanged() {
+			frame.settle()
+		}
+
+		// A new list starts at its top, so the place is held until the new content is laid out
+		function onModelChanged() {
+			frame.holding = true
+			frame.settle()
+		}
+	}
+
 	ColumnLayout {
 		anchors.fill: parent
 		anchors.leftMargin: 56

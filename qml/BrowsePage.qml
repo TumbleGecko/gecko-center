@@ -19,7 +19,7 @@ GeckoPage {
 	function remember(extra) {
 		const updated = Object.assign({}, window.browseMemory)
 		updated[memoryKey] = Object.assign({ text: search.text, source: source, group: group,
-			packageResults: packageResults, contentY: grid.contentY }, extra || {})
+			packageResults: packageResults, place: page.keptY }, extra || {})
 		window.browseMemory = updated
 	}
 
@@ -33,6 +33,7 @@ GeckoPage {
 	}
 
 	title: installedOnly ? "Installed" : "Explore"
+	scroller: page.packageMode ? packageList : grid
 	guideTopic: "software"
 	busy: searching || !window.catalogReady
 	subtitle: installedOnly ? "Apps on this computer from openSUSE and Flathub."
@@ -41,7 +42,7 @@ GeckoPage {
 	Component.onCompleted: {
 		search.text = memory.text || ""
 		applyFilter()
-		grid.contentY = memory.contentY || 0
+		page.hold(memory.place || 0)
 	}
 	Component.onDestruction: remember()
 

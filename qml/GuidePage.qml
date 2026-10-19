@@ -10,6 +10,7 @@ GeckoPage {
 	readonly property var guide: center.info.guide || { topics: [], words: [] }
 
 	title: "Guide"
+	scroller: list
 	subtitle: "Everything about this computer in plain words. Pick a topic, or look up a word below."
 
 	Component.onCompleted: center.read("guide")

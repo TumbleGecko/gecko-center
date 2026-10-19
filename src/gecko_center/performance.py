@@ -12,7 +12,7 @@ import re
 import time
 from pathlib import Path
 
-from . import look
+from . import look, sensors
 
 PROC = Path("/proc")
 DRM = Path("/sys/class/drm")
@@ -103,7 +103,7 @@ def graphics_cards():
 # Apps =========================================================================
 
 
-class _DesktopNames:
+class DesktopNames:
 	"""The name an app's menu entry gives it, looked up once per desktop id."""
 
 	def __init__(self):
@@ -256,7 +256,7 @@ class Sampler:
 	"""Keeps the last counts, since usage is the difference between two looks."""
 
 	def __init__(self):
-		self._names = _DesktopNames()
+		self._names = DesktopNames()
 		self._last_cpu = None
 		self._last_processes = {}
 		self._last_amd = {}
@@ -358,7 +358,7 @@ class Sampler:
 		amd_cards = _amd_cards()
 		disk_read, disk_write, received, sent = self._rates(elapsed)
 		return {
-			"cpu": overall, "cores": cores,
+			"cpu": overall, "cores": cores, "cpuTemperature": sensors.processor_degrees(sensors.read_sensors()),
 			"memoryUsed": memory.get("MemTotal", 0) - memory.get("MemAvailable", 0),
 			"memoryTotal": memory.get("MemTotal", 0),
 			"swapUsed": memory.get("SwapTotal", 0) - memory.get("SwapFree", 0),

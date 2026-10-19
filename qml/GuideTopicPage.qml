@@ -11,6 +11,7 @@ GeckoPage {
 	readonly property var topic: ((center.info.guide || {}).topics || []).find(item => item.id === topicId) || null
 
 	title: topic ? topic.title : ""
+	scroller: reader
 	subtitle: topic ? topic.summary : ""
 
 	Component.onCompleted: center.read("guide")

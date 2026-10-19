@@ -28,6 +28,18 @@ guide.sources.body=A software source, often called a repository, is a server wit
 guide.sources.page=sources
 guide.sources.action=Open Sources
 
+guide.hardware.title=What is inside
+guide.hardware.summary=Each part of the computer, how it is doing and where its details are.
+guide.hardware.body=Hardware lists every part Linux can see, from the processor and memory to the screens, disks and what is plugged in.\nA temperature next to a part is how warm it is right now. Processors run at 40 to 95 °C and disks below 70 °C.\nClicking a part shows everything known about it, such as its maker, model, driver and firmware version. Each line can be selected and copied into a search.\nControllers are the parts on the motherboard that connect the rest, such as USB and disk controllers.\nDrivers is where to install or update what makes a part work.
+guide.hardware.page=hardware
+guide.hardware.action=Open Hardware
+
+guide.logs.title=When something goes wrong
+guide.logs.summary=What the computer wrote down about crashes and problems, in plain words.
+guide.logs.body=Programs and the system write a short message whenever something fails. Logs gathers them for each start of the computer.\nA crash means a program closed on its own. One crash now and then is normal, a program that crashes again and again often needs an update.\nMost other problems are harmless and go away on their own. Logs explains the ones that often come up, and how often each one happened.\nPick an earlier start at the top to see what happened before the computer was last turned off, such as why it froze.\nMessages from the system itself need your password, so Logs shows your own first and asks before it shows the rest.
+guide.logs.page=logs
+guide.logs.action=Open Logs
+
 guide.drivers.title=Drivers and firmware
 guide.drivers.summary=What makes the hardware work, and when to install anything.
 guide.drivers.body=A driver is the part of the system that talks to a piece of hardware.\nLinux already includes the drivers for almost everything, including AMD and Intel graphics.\nNVIDIA graphics cards are the exception. They work without NVIDIA's own driver, but slowly. Drivers offers to install it.\nFirmware is the small program that lives inside a device itself, such as the motherboard or an SSD. Some makers publish firmware updates for Linux, and Drivers lists them when there are any.

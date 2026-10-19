@@ -21,6 +21,7 @@ GeckoPage {
 	}
 
 	title: "News"
+	scroller: list
 	guideTopic: "help"
 	subtitle: snapshotWords() || "What is new in openSUSE."
 	busy: center.reading.includes("news")

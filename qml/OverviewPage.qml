@@ -28,6 +28,7 @@ GeckoPage {
 	}
 
 	title: "Overview"
+	scroller: list
 	guideTopic: "tumbleweed"
 	busy: center.reading.includes("health")
 	empty: checks.length === 0

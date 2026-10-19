@@ -45,11 +45,20 @@ ApplicationWindow {
 	property var history: []
 	property var future: []
 
+	// Where the open page's list is, so a step back or forward returns to the same place
+	function here() {
+		return { page: page, detail: detail, place: content.item && content.item.scroller ? content.item.keptY : 0 }
+	}
+
+	// The place the page about to load returns to, set only by Back and Forward
+	property real returnPlace: -1
+
 	function go(name, entry) {
 		if (name === page && entry === detail)
 			return
-		history = history.concat([{ page: page, detail: detail }])
+		history = history.concat([here()])
 		future = []
+		returnPlace = -1
 		page = name
 		detail = entry
 	}
@@ -87,9 +96,10 @@ ApplicationWindow {
 	function goBack() {
 		if (history.length === 0)
 			return
-		future = future.concat([{ page: page, detail: detail }])
+		future = future.concat([here()])
 		const previous = history[history.length - 1]
 		history = history.slice(0, -1)
+		returnPlace = previous.place
 		page = previous.page
 		detail = previous.detail
 	}
@@ -97,9 +107,10 @@ ApplicationWindow {
 	function goForward() {
 		if (future.length === 0)
 			return
-		history = history.concat([{ page: page, detail: detail }])
+		history = history.concat([here()])
 		const next = future[future.length - 1]
 		future = future.slice(0, -1)
+		returnPlace = next.place
 		page = next.page
 		detail = next.detail
 	}
@@ -260,14 +271,15 @@ ApplicationWindow {
 				"overview": overviewPage, "performance": performancePage, "explore": explorePage,
 				"installed": installedPage, "updates": updatesPage, "snapshots": snapshotsPage, "sources": sourcesPage,
 				"hardware": hardwarePage, "drivers": driversPage, "storage": storagePage,
-				"services": servicesPage, "guide": guidePage, "news": newsPage, "settings": settingsPage
+				"services": servicesPage, "logs": logsPage, "guide": guidePage, "news": newsPage, "settings": settingsPage
 			})
 			Layout.fillWidth: true
 			Layout.fillHeight: true
 			sourceComponent: {
 				if (window.detail)
 					return window.detail.guide ? guideTopicPage : window.detail.snapshot ? snapshotPage
-						: window.detail.sourceAlias ? sourcePage : window.detail.device ? devicePage : detailPage
+						: window.detail.sourceAlias ? sourcePage : window.detail.device ? devicePage
+						: window.detail.problem ? logPage : detailPage
 				return content.pages[window.page] || content.pages.overview
 			}
 
@@ -276,6 +288,9 @@ ApplicationWindow {
 				item.opacity = 0
 				item.x = 40
 				enter.restart()
+				if (window.returnPlace > 0)
+					item.hold(window.returnPlace)
+				window.returnPlace = -1
 			}
 
 			ParallelAnimation {
@@ -301,6 +316,7 @@ ApplicationWindow {
 	Component { id: driversPage; DriversPage {} }
 	Component { id: storagePage; StoragePage {} }
 	Component { id: servicesPage; ServicesPage {} }
+	Component { id: logsPage; LogsPage {} }
 	Component { id: guidePage; GuidePage {} }
 	Component { id: newsPage; NewsPage {} }
 	Component { id: settingsPage; SettingsPage {} }
@@ -309,4 +325,5 @@ ApplicationWindow {
 	Component { id: snapshotPage; SnapshotPage { number: window.detail.snapshot } }
 	Component { id: sourcePage; SourcePage { sourceAlias: window.detail.sourceAlias } }
 	Component { id: devicePage; DevicePage { deviceKey: window.detail.device } }
+	Component { id: logPage; LogPage { problemKey: window.detail.problem } }
 }

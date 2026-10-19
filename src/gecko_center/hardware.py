@@ -8,11 +8,11 @@ import math
 import re
 from pathlib import Path
 
-from . import drivers, look
+from . import drivers, look, performance
+from . import sensors as sensors_module
 
 SYS = Path("/sys")
 DMI = SYS / "class" / "dmi" / "id"
-HWMON = SYS / "class" / "hwmon"
 USB = SYS / "bus" / "usb" / "devices"
 NETWORK = SYS / "class" / "net"
 POWER = SYS / "class" / "power_supply"
@@ -27,7 +27,6 @@ PLACEHOLDERS = {"", "system product name", "to be filled by o.e.m.", "default st
 CHASSIS = {3: "Desktop", 4: "Desktop", 6: "Tower", 7: "Tower", 8: "Laptop", 9: "Laptop", 10: "Laptop", 14: "Laptop",
 	13: "All in one", 30: "Tablet", 31: "Convertible", 32: "Convertible", 35: "Mini PC", 36: "Mini PC"}
 CPU_MAKERS = {"AuthenticAMD": "AMD", "GenuineIntel": "Intel"}
-CPU_SENSORS = ("k10temp", "coretemp", "zenpower")
 
 # Each memory module's SPD chip, by its driver, with where the maker code and part number sit, DDR5 then DDR4
 SPD_LAYOUTS = {"spd5118": (512, 521, 551), "ee1004": (320, 329, 349)}
@@ -59,6 +58,11 @@ DISK_KINDS = {"USB": "USB drive", "SD card": "SD card"}
 # fwupd lists each Secure Boot certificate as a device, they are kept together as one entry
 CERTIFICATE_PLUGINS = ("uefi_kek", "uefi_pk", "uefi_db", "uefi_dbx")
 
+TEMPERATURE = "Temperature"
+# Degrees at which a part counts as hot, from what makers give as the top of the normal range
+HOT = {"Processor": 90, "Graphics": 85, "Memory": 80, "Storage": 70}
+DEFAULT_HOT = 90
+
 GROUP_ORDER = ("Computer", "Processor", "Memory", "Graphics", "Displays", "Storage", "Sound", "Network", "Input",
 	"Cameras", "Batteries", "Other USB devices", "Controllers", "Firmware")
 
@@ -77,9 +81,15 @@ def _resolved(path):
 		return ""
 
 
-def _device(key, group, name, kind, summary, facts):
-	"""One entry of the page, its facts kept in order and the empty ones left out."""
-	return {"key": key, "group": group, "name": name, "kind": kind, "summary": summary,
+def _device(key, group, name, kind, summary, facts, short="", detail=""):
+	"""One entry of the page, its facts kept in order and the empty ones left out.
+
+	A Temperature fact arrives as degrees, so the page gets the number to judge and the words to show.
+	"""
+	degrees = next((value for label, value in facts if label == TEMPERATURE), None)
+	facts = [(label, _celsius(value) if label == TEMPERATURE else value) for label, value in facts]
+	return {"key": key, "group": group, "name": name, "short": short or name, "kind": kind, "summary": summary,
+		"detail": detail, "degrees": degrees, "hot": degrees is not None and degrees >= HOT.get(group, DEFAULT_HOT),
 		"facts": [[label, value] for label, value in facts if value]}
 
 
@@ -103,28 +113,19 @@ def _speed_text(megabits):
 	return f"{megabits:g} Mbit/s"
 
 
-# Temperatures =================================================================
+def _celsius(degrees):
+	return f"{degrees:.0f} °C" if degrees is not None else ""
 
 
-def _sensors():
-	"""Each temperature sensor by the real path of the device it measures, with its name and degrees."""
-	found = []
-	for sensor in sorted(HWMON.glob("hwmon*")):
-		reading = _read(sensor / "temp1_input")
-		if reading.lstrip("-").isdigit():
-			found.append((_resolved(sensor / "device"), _read(sensor / "name"), int(reading) / 1000))
-	return found
+def _date(text):
+	"""SMBIOS writes dates month first, which reads wrong outside the US, so they are turned around."""
+	found = re.fullmatch(r"(\d{2})/(\d{2})/(\d{4})", text)
+	return f"{found.group(3)}-{found.group(1)}-{found.group(2)}" if found else text
 
 
-def _temperature(sensors, device_path):
-	"""The first sensor on the device or on a part of it, in degrees.
-
-	A chip reached over the device's I2C bus, such as a memory module behind the SMBus, is a part of its own.
-	"""
-	for path, _name, degrees in sensors:
-		if device_path and path.startswith(device_path) and "/i2c-" not in path[len(device_path):]:
-			return f"{degrees:.0f} °C"
-	return ""
+def _short_chip_name(name):
+	"""The name people use, without the chip code drivers.product_name adds in brackets."""
+	return name.split(" (")[0]
 
 
 # The computer, its processor and memory =======================================
@@ -138,11 +139,13 @@ def _computer(firmware):
 	name = product if known_product else _read(DMI / "board_name") or "This computer"
 	kind = CHASSIS.get(int(chassis), "Computer") if chassis.isdigit() else "Computer"
 	system_firmware = next((item for item in firmware if item.get("Plugin") == "uefi_capsule"), {})
+	firmware_line = " ".join(part for part in ("Firmware", _read(DMI / "bios_version"),
+		f"from {_date(_read(DMI / 'bios_date'))}" if _read(DMI / "bios_date") else "") if part)
 	return [_device("computer", "Computer", name, kind, board if known_product else _read(DMI / "sys_vendor"), [
 		("Maker", _read(DMI / "sys_vendor")), ("Model", product if known_product else ""), ("Motherboard", board),
 		("Firmware maker", _read(DMI / "bios_vendor")), ("Firmware version", _read(DMI / "bios_version")),
-		("Firmware date", _read(DMI / "bios_date")), ("Firmware build", system_firmware.get("Version", "")),
-	])]
+		("Firmware date", _date(_read(DMI / "bios_date"))), ("Firmware build", system_firmware.get("Version", "")),
+	], detail=firmware_line)]
 
 
 def _processor(sensors, firmware):
@@ -157,16 +160,19 @@ def _processor(sensors, firmware):
 		cores = str(int(fields["Core(s) per socket"]) * int(fields["Socket(s)"]))
 	fastest = fields.get("CPU max MHz", "").replace(",", ".")
 	fastest = f"{float(fastest) / 1000:.1f} GHz" if re.fullmatch(r"[\d.]+", fastest) else ""
-	sensor = next((path for path, name, _degrees in sensors if name in CPU_SENSORS), "")
 	microcode = next((item.get("Version", "") for item in firmware if item.get("Plugin") == "cpu"), "")
 	summary = ", ".join(part for part in (cores and look.plural(int(cores), "core"),
 		threads and threads + " threads", fastest and "up to " + fastest) if part)
-	return [_device("processor", "Processor", fields.get("Model name", "Processor"), "Processor", summary, [
+	model = fields.get("Model name", "Processor")
+	# Makers repeat their name and the core count in the model name, the page shows them on their own
+	short = re.sub(r"^(AMD|Intel\(R\) Core\(TM\)|Intel)\s+|\s+(\d+-Core\s+)?Processor$|\s+CPU @.*$", "", model)
+	cache = fields.get("L3 cache", "").split(" (")[0]
+	return [_device("processor", "Processor", model, "Processor", summary, [
 		("Maker", CPU_MAKERS.get(fields.get("Vendor ID", ""), fields.get("Vendor ID", ""))), ("Cores", cores),
-		("Threads", threads), ("Fastest speed", fastest), ("Cache", fields.get("L3 cache", "").split(" (")[0]),
-		("Architecture", fields.get("Architecture", "")), ("Temperature", _temperature(sensors, sensor)),
+		("Threads", threads), ("Fastest speed", fastest), ("Cache", cache),
+		("Architecture", fields.get("Architecture", "")), (TEMPERATURE, sensors_module.processor_degrees(sensors)),
 		("Microcode", microcode),
-	])]
+	], short=short, detail=f"{cache} cache" if cache else "")]
 
 
 def _memory_modules(sensors):
@@ -181,9 +187,11 @@ def _memory_modules(sensors):
 			part = data[part_at:part_end].decode("ascii", errors="ignore").strip()
 			maker = MEMORY_MAKERS.get(data[maker_at:maker_at + 2].hex(), "")
 			slot = len(modules) + 1
+			kind = "DDR5" if driver == "spd5118" else "DDR4"
 			modules.append(_device(f"memory:{chip.name}", "Memory", part or f"Module {slot}", "Memory module",
-				maker, [("Maker", maker), ("Part number", part), ("Kind", "DDR5" if driver == "spd5118" else "DDR4"),
-					("Temperature", _temperature(sensors, _resolved(chip)))]))
+				maker, [("Maker", maker), ("Part number", part), ("Kind", kind),
+					(TEMPERATURE, sensors_module.device_degrees(sensors, _resolved(chip)))],
+				short=f"{maker} {kind}".strip(), detail=part))
 	return modules
 
 
@@ -194,9 +202,14 @@ def _memory(sensors):
 	# What Linux reports is a little below what the modules hold, since the firmware keeps a part for itself
 	total_text = f"{total / 1024 ** 3:.0f} GB" if total else ""
 	summary = total_text + (f" in {look.plural(len(modules), 'module')}" if modules else "")
-	return [_device("memory", "Memory", "Memory", "All memory", summary, [
+	kinds = sorted({module["short"] for module in modules})
+	# The tile shows the warmest module, each module's own is on its card
+	warmth = [module["degrees"] for module in modules if module["degrees"] is not None]
+	detail = f"{len(modules)} × {kinds[0]}" if len(kinds) == 1 else look.plural(len(modules), "module") if modules else ""
+	return [_device("memory", "Memory", "Memory", "All memory", detail or summary, [
 		("Usable", total_text), ("Modules", str(len(modules)) if modules else ""),
-	])] + modules
+		(TEMPERATURE, max(warmth) if warmth else None),
+	], short=total_text)] + modules
 
 
 # Parts on the PCI bus and USB ==================================================
@@ -229,8 +242,14 @@ def _network_facts(slot):
 	return []
 
 
+def _card_degrees(name, measured):
+	"""NVIDIA cards publish no hwmon sensor, so their temperature comes from what the Performance page measures."""
+	return next((card["temperature"] for card in measured if card["name"].endswith(name)), None)
+
+
 def _pci_parts(sensors, cards):
 	parts = []
+	measured = performance.graphics_cards()
 	for fields in drivers.pci_devices():
 		code = re.search(r"\[([0-9a-f]{4})\]$", fields.get("Class", ""))
 		prefix = code.group(1)[:2] if code else ""
@@ -247,8 +266,14 @@ def _pci_parts(sensors, cards):
 			card.get("about", "")), ("Driver version", card.get("version", "")), ("Slot speed", _pci_link(slot))]
 		if group == "Network":
 			facts += _network_facts(slot)
-		facts += [("Temperature", _temperature(sensors, _resolved(PCI / slot))), ("Address", slot)]
-		parts.append(_device(f"pci:{slot}", group, name, kind, maker, facts))
+		degrees = sensors_module.device_degrees(sensors, _resolved(PCI / slot))
+		if degrees is None and group == "Graphics":
+			degrees = _card_degrees(_short_chip_name(name), measured)
+		facts += [(TEMPERATURE, degrees), ("Address", slot)]
+		in_use = f"{card['about'].split(',')[0].rstrip('.')} {card.get('version', '')}".strip() if card.get("about") \
+			else f"Driver {driver}" if driver else "No driver in use"
+		parts.append(_device(f"pci:{slot}", group, name, kind, maker, facts, short=_short_chip_name(name),
+			detail=in_use))
 	return parts
 
 
@@ -278,7 +303,7 @@ def _usb_parts():
 		parts.append(_device(f"usb:{device.name}", _usb_group(device), name, "USB device", maker, [
 			("Maker", maker), ("Connection", speed_text), ("Drivers", ", ".join(used) or "None in use"),
 			("Firmware version", version), ("Port", device.name),
-		]))
+		], detail=speed_text.split(", ")[-1] if speed_text else ""))
 	return parts
 
 
@@ -340,7 +365,7 @@ def _displays():
 		screens.append(_device(f"display:{connector.name}", "Displays", name or port, "Screen", summary, [
 			("Maker", maker), ("Size", size), ("Resolution", resolution), ("Refresh rate", refresh),
 			("Scale", f"{scale * 100:.0f} %" if resolution else ""), ("Port", port), ("Graphics", card_name),
-		]))
+		], detail=" ".join(part for part in (size.split(" (")[0], maker) if part)))
 	return screens
 
 
@@ -362,7 +387,8 @@ def _disks(sensors):
 		disks.append(_device(f"disk:{block['name']}", "Storage", (block.get("model") or block["name"]).strip(), kind,
 			f"{size} {kind}", [("Size", size), ("Kind", kind), ("Connection", connection),
 				("Firmware version", (block.get("rev") or "").strip()),
-				("Temperature", _temperature(sensors, device_path)), ("Name in the system", "/dev/" + block["name"])]))
+				(TEMPERATURE, sensors_module.device_degrees(sensors, device_path)),
+				("Name in the system", "/dev/" + block["name"])]))
 	return disks
 
 
@@ -419,7 +445,7 @@ def _firmware(devices):
 
 
 def collect():
-	sensors = _sensors()
+	sensors = sensors_module.read_sensors()
 	firmware = _fwupd_devices()
 	cards = drivers.graphics_cards()
 	found = (_computer(firmware) + _processor(sensors, firmware) + _memory(sensors) + _pci_parts(sensors, cards)

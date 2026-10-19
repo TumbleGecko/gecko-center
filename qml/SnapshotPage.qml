@@ -30,6 +30,7 @@ GeckoPage {
 
 	// The full title is too long for the heading, so the heading names the number and the title goes below
 	title: snapshot ? "Snapshot " + snapshot.number : ""
+	scroller: list
 	subtitle: snapshot ? snapshot.title : ""
 	empty: !snapshot
 

@@ -104,6 +104,7 @@ GeckoPage {
 	}
 
 	title: "Performance"
+	scroller: list
 	guideTopic: "performance"
 	subtitle: waitingWords || "Right now, updated every second."
 	busy: !report
@@ -167,6 +168,15 @@ GeckoPage {
 							}
 						}
 					}
+				}
+
+				Text {
+					Layout.fillWidth: true
+					visible: !!page.report && page.report.cpuTemperature !== null
+					text: page.report && page.report.cpuTemperature !== null
+						? Math.round(page.report.cpuTemperature) + " °C" : ""
+					color: Theme.muted
+					elide: Text.ElideRight
 				}
 			}
 
